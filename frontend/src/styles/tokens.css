@@ -1,0 +1,337 @@
+/* =============================================================================
+   TraceHealth — Design Token CSS Custom Properties
+   DataLens v2.0 base + health-semantic extensions
+
+   See docs/UI_Design_System_v2_DataLens.md for the full rationale.
+   INVARIANT: This file must stay in sync with tailwind.config.js
+   ============================================================================= */
+
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Figtree:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Root token definitions ──────────────────────────────────────────────── */
+:root {
+  /* Neutral palette */
+  --parchment:    #F4EFE6;
+  --parchment-lo: #EDE7DC;
+  --parchment-hi: #FAF7F2;
+  --white:        #FFFFFF;
+
+  /* Ink scale */
+  --ink:       #1C1510;
+  --ink-mid:   #4A3D35;
+  --ink-light: #8A7D74;
+  --ink-ghost: #C4B9B0;
+
+  /* Border scale */
+  --border:        #DDD5C9;
+  --border-soft:   #EDE7DC;
+  --border-strong: #C4B9B0;
+
+  /* Primary accent — terracotta */
+  --terra:      #C25539;
+  --terra-dark: #9E3D26;
+  --terra-dim:  rgba(194, 85, 57, 0.09);
+
+  /* Sage — success / low-risk dual-role */
+  --sage:     #4D7A60;
+  --sage-dim: rgba(77, 122, 96, 0.12);
+
+  /* Status / health-semantic — risk severity ONLY */
+  --status-low:           #4D7A60;
+  --status-low-dim:       rgba(77, 122, 96, 0.12);
+  --status-moderate:      #B8862E;
+  --status-moderate-dim:  rgba(184, 134, 46, 0.12);
+  --status-high:          #B23A3A;
+  --status-high-dim:      rgba(178, 58, 58, 0.12);
+
+  /* Categorical chart colors — chart series / disease nav dots ONLY */
+  --chart-clay:  #C25539; /* Diabetes      | —                    */
+  --chart-plum:  #8B5D6B; /* Heart Disease  | XGBoost              */
+  --chart-slate: #5B7C99; /* Tuberculosis   | Logistic Regression  */
+  --chart-gold:  #A68A4E; /* Lung Cancer    | Random Forest        */
+
+  /* Spacing scale (base-4) */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-7:  28px;
+  --space-8:  32px;
+  --space-9:  36px;
+  --space-10: 40px;
+  --space-11: 48px;
+  --space-12: 56px;
+  --space-13: 64px;
+  --space-14: 80px;
+
+  /* Border radius */
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   10px;
+  --radius-xl:   14px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm:    0 1px 3px rgba(28, 21, 16, 0.08);
+  --shadow-md:    0 4px 12px rgba(28, 21, 16, 0.10);
+  --shadow-lg:    0 8px 24px rgba(28, 21, 16, 0.12);
+  --shadow-focus: 0 0 0 3px rgba(194, 85, 57, 0.25); /* terra focus ring */
+
+  /* Motion */
+  --ease-enter:  cubic-bezier(0.0, 0.0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-std:    cubic-bezier(0.4, 0.0, 0.2, 1);
+  --ease-exit:   cubic-bezier(0.4, 0.0, 1, 1);
+  --dur-fast:    100ms;
+  --dur-base:    200ms;
+  --dur-slow:    300ms;
+  --dur-enter:   350ms;
+}
+
+/* ── Base resets & typography ────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  background-color: var(--parchment);
+  color: var(--ink);
+  font-family: "Figtree", system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* Cormorant Garamond — display/stat numerals only (never body copy) */
+.font-display { font-family: "Cormorant Garamond", Georgia, serif; }
+
+/* ── Shared component classes ────────────────────────────────────────────── */
+
+/* DataLens card pattern */
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+}
+
+/* DataLens sidebar */
+.sidebar {
+  width: 220px;
+  background: var(--ink);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-6) 0;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-6);
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  transition: background var(--dur-fast) var(--ease-std),
+              color var(--dur-fast) var(--ease-std);
+  border-left: 2px solid transparent;
+}
+
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.nav-link.active {
+  color: var(--white);
+  border-left-color: var(--terra);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.nav-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.30);
+  padding: var(--space-5) var(--space-6) var(--space-2);
+  font-family: "JetBrains Mono", monospace;
+}
+
+/* Disease nav dot — tinted with the disease's chart color */
+.nav-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+/* ── Auth split-panel layout (DataLens §14) ──────────────────────────────── */
+.auth-layout {
+  display: grid;
+  grid-template-columns: 52fr 48fr;
+  min-height: 100vh;
+}
+
+.auth-brand-panel {
+  background: var(--parchment);
+  padding: var(--space-14) var(--space-12);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.auth-form-panel {
+  background: var(--white);
+  padding: var(--space-14) var(--space-12);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Collapse to single column below 860px */
+@media (max-width: 860px) {
+  .auth-layout { grid-template-columns: 1fr; }
+  .auth-brand-panel { display: none; }
+}
+
+/* ── Input styling ───────────────────────────────────────────────────────── */
+.input {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-family: "Figtree", sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  transition: border-color var(--dur-fast) var(--ease-std),
+              box-shadow var(--dur-fast) var(--ease-std);
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--terra);
+  box-shadow: var(--shadow-focus);
+}
+
+.input::placeholder { color: var(--ink-ghost); }
+
+.input-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--ink-mid);
+  margin-bottom: var(--space-2);
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-md);
+  font-family: "Figtree", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-std),
+              transform var(--dur-fast) var(--ease-std),
+              box-shadow var(--dur-fast) var(--ease-std);
+  border: none;
+  text-decoration: none;
+}
+
+.btn:active { transform: translateY(1px); }
+
+.btn-primary {
+  background: var(--terra);
+  color: var(--white);
+}
+.btn-primary:hover { background: var(--terra-dark); box-shadow: var(--shadow-md); }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--border-strong);
+}
+.btn-secondary:hover { background: var(--parchment-lo); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--terra);
+  padding-left: 0;
+  padding-right: 0;
+}
+.btn-ghost:hover { color: var(--terra-dark); }
+
+/* Danger variant — used exclusively for account deletion (Profile page) */
+.btn-danger {
+  background: transparent;
+  color: var(--status-high);
+  border: 1px solid var(--status-high);
+}
+.btn-danger:hover {
+  background: var(--status-high-dim);
+}
+
+/* ── Feedback / error box (DataLens §11) ─────────────────────────────────── */
+.error-box {
+  background: var(--status-high-dim);
+  border: 1px solid var(--status-high);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  color: var(--status-high);
+  font-size: 13px;
+}
+
+.info-box {
+  background: var(--parchment-lo);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  color: var(--ink-mid);
+  font-size: 13px;
+}
+
+/* ── Spinner ─────────────────────────────────────────────────────────────── */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-top-color: var(--terra);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Disclaimer footer ───────────────────────────────────────────────────── */
+.disclaimer-footer {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  color: var(--ink-light);
+  text-align: center;
+  padding: var(--space-3) var(--space-6);
+  border-top: 1px solid var(--border-soft);
+}

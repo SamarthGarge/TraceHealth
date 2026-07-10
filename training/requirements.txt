@@ -1,0 +1,13 @@
+scikit-learn
+xgboost
+shap
+joblib
+pandas
+numpy
+matplotlib
+
+# Full-scope additions (vision + NLP training)
+torch
+torchvision
+pytorch-grad-cam
+Pillow

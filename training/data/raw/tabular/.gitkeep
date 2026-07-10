@@ -1,0 +1,3 @@
+Place the 4 in-scope CSVs here (see docs/Datasets.md §2 for download links):
+diabetes.csv, heart_disease.csv, tuberculosis_symptoms.csv, lung_cancer_survey.csv
+These files are git-ignored.

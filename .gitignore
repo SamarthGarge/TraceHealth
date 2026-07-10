@@ -1,0 +1,43 @@
+# --- Environments & secrets ---
+.env
+.env.local
+*.env
+!.env.example
+
+# --- Python (backend / training) ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# --- Node (frontend) ---
+node_modules/
+dist/
+build/
+.vite/
+*.log
+
+# --- Data & models (see docs/Datasets.md for provenance) ---
+training/data/raw/tabular/*.csv
+training/data/raw/images/*
+!training/data/raw/images/.gitkeep
+training/data/raw/text/*.csv
+!training/data/raw/text/SOURCES.md
+training/data/processed/*
+!training/data/processed/.gitkeep
+models/*.pkl
+models/*.joblib
+models/vision/*.pt
+models/vision/*.pth
+!models/.gitkeep
+!models/model_metadata.json
+!models/vision/.gitkeep
+
+# --- OS / editor ---
+.DS_Store
+.vscode/
+.idea/
+*.swp

@@ -1,0 +1,10 @@
+{
+  "diabetes": {},
+  "heart": {},
+  "tb": {},
+  "cancer": {},
+  "tb_xray_model": {},
+  "cancer_image_model": {},
+  "symptom_classifier": {},
+  "framingham": { "type": "formula", "note": "No trained artifact — see core/framingham.py" }
+}

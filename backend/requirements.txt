@@ -1,0 +1,45 @@
+# ── Core Framework ─────────────────────────────────────────────────────────────
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+pydantic==2.8.2
+pydantic-settings==2.4.0
+python-multipart==0.0.9
+
+# ── Database ───────────────────────────────────────────────────────────────────
+motor==3.5.1
+pymongo==4.8.0
+
+# ── Auth (token verification via JWKS only — no password hashing, no OAuth here)
+python-jose[cryptography]==3.3.0
+httpx==0.27.2
+
+# ── Rate Limiting ──────────────────────────────────────────────────────────────
+slowapi==0.1.9
+
+# ── ML Core (tabular) ─────────────────────────────────────────────────────────
+scikit-learn==1.5.1
+xgboost==2.1.1
+shap==0.46.0
+joblib==1.4.2
+pandas==2.2.2
+numpy==1.26.4
+
+# ── Vision Pipeline (Phase 6) ─────────────────────────────────────────────────
+torch==2.3.1
+torchvision==0.18.1
+grad-cam
+Pillow==10.4.0
+
+# ── Document Intelligence (Phase 8) ───────────────────────────────────────────
+pytesseract==0.3.13
+pdfplumber==0.11.3
+
+# ── Data Export (Phase 9) ─────────────────────────────────────────────────────
+weasyprint==62.3
+
+# ── Scheduling (Phase 7 symptom classifier background, etc.) ──────────────────
+apscheduler==3.10.4
+
+# ── Testing ────────────────────────────────────────────────────────────────────
+pytest==8.3.2
+pytest-asyncio==0.23.8

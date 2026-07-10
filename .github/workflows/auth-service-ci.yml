@@ -1,0 +1,24 @@
+name: Auth Service CI
+
+on:
+  pull_request:
+    paths:
+      - "auth-service/**"
+  push:
+    branches: [main]
+    paths:
+      - "auth-service/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: auth-service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install
+      - run: npm audit --audit-level=high || true   # non-blocking initially
