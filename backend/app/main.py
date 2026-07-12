@@ -17,6 +17,8 @@ from slowapi.errors import RateLimitExceeded
 
 # Routers — imported here; implemented progressively per phase
 from app.routers import models_info
+from app.routers import auth      # signup, login, logout, /me, Google OAuth
+from app.routers import users     # profile update, account deletion
 
 # Phase 3+
 # from app.routers import predict, history
@@ -28,9 +30,6 @@ from app.routers import models_info
 # from app.routers import admin
 # Phase 7+
 # from app.routers import symptom_check
-
-# Users (auth/me endpoint — Phase 1)
-from app.routers import users
 
 
 setup_logging()
@@ -91,7 +90,8 @@ async def health_check():
 
 
 # Routers
-app.include_router(users.router, prefix="/api", tags=["Auth"])
+app.include_router(auth.router, prefix="/api", tags=["Auth"])
+app.include_router(users.router, prefix="/api", tags=["Users"])
 app.include_router(models_info.router, prefix="/api", tags=["Models"])
 
 # Phase 3+ — uncomment as implemented:

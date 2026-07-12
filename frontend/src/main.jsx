@@ -9,8 +9,8 @@ import "./styles/tokens.css";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60_000,        // 1 minute — keeps server state fresh without hammering the API
-      retry: 1,                 // one retry on failure
+      staleTime: 60_000,
+      retry: 1,
       refetchOnWindowFocus: false,
     },
   },

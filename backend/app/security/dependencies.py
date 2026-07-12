@@ -1,68 +1,76 @@
 """
 FastAPI dependencies for authentication and authorization.
-See docs/Auth_Service_Architecture.md §4.2 for the JWKS verification rationale.
+
+Token source (in priority order):
+  1. httpOnly cookie "access_token"  — browser clients (preferred, XSS-safe)
+  2. Authorization: Bearer <token>   — API clients / testing
+
+This module no longer calls an external auth-service.
+All JWT verification is done locally via app.core.jwt.
 """
-from fastapi import Depends, HTTPException, status
+from fastapi import Cookie, Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError
 
-from app.security.verify_token import verify_bearer_token
+from app.core.jwt import verify_access_token
 from app.utils.logging import get_logger
 
 logger = get_logger(__name__)
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
-def _extract_user_from_token(credentials: HTTPAuthorizationCredentials | None) -> dict | None:
+def _resolve_token(
+    access_token: str | None,
+    credentials: HTTPAuthorizationCredentials | None,
+) -> dict | None:
     """
-    Verifies the bearer token via the auth-service JWKS endpoint.
-    Returns the token payload dict on success, or None if no token present.
-    Raises 401 if a token IS present but invalid/expired.
+    Extracts and verifies the access token from either a cookie or a Bearer header.
+    Returns the payload dict, or None if no token is present at all.
+    Raises 401 if a token IS present but is invalid / expired.
     """
-    if credentials is None:
+    raw_token: str | None = None
+
+    if access_token:
+        raw_token = access_token
+    elif credentials:
+        raw_token = credentials.credentials
+
+    if raw_token is None:
         return None
 
     try:
-        payload = verify_bearer_token(credentials.credentials)
-        return payload
-    except JWTError as e:
-        logger.warning("Token verification failed: %s", type(e).__name__)
+        return verify_access_token(raw_token)
+    except JWTError as exc:
+        logger.warning("Token verification failed: %s", type(exc).__name__)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token.",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    except Exception as e:
-        logger.error("Unexpected error during token verification: %s", type(e).__name__)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials.",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
 
 
 async def get_current_user(
+    access_token: str | None = Cookie(default=None),
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ) -> dict | None:
     """
-    Optional authentication dependency.
-    Returns the verified token payload if authenticated, None if no token.
+    Optional authentication — returns payload or None.
     Use for routes that work for both guests and logged-in users
-    (e.g., POST /api/predict/{disease} — prediction works for everyone,
-    but only persists for logged-in users who have consented).
+    (e.g., POST /api/predict — predictions work for everyone,
+    but are only persisted for consented, logged-in users).
     """
-    return _extract_user_from_token(credentials)
+    return _resolve_token(access_token, credentials)
 
 
 async def require_auth(
+    access_token: str | None = Cookie(default=None),
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ) -> dict:
     """
-    Mandatory authentication dependency.
-    Returns the verified token payload or raises 401.
-    Use for routes that must be gated (history, uploads, profile, etc.).
+    Mandatory authentication — returns payload or raises 401.
+    Use for routes that must be gated (history, profile, uploads, export).
     """
-    user = _extract_user_from_token(credentials)
+    user = _resolve_token(access_token, credentials)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -76,22 +84,17 @@ async def require_admin(
     current_user: dict = Depends(require_auth),
 ) -> dict:
     """
-    Admin role dependency — additive to require_auth, never a replacement.
-    Returns the verified token payload if the user has role='admin'.
-    Raises 404 (not 403) to avoid confirming the route exists for non-admin users.
-    See Backend doc §4.3 and Full-Scope Expansion §2.7.
+    Admin role gate — additive to require_auth.
+    Returns 404 (not 403) to avoid confirming the route exists for non-admins.
     """
-    role = current_user.get("role", "user")
-    if role != "admin":
-        # 404 is intentional — consistent with the ownership-check-then-404 pattern
+    if current_user.get("role") != "admin":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found.")
     return current_user
 
 
 def user_has_consented(user: dict) -> bool:
     """
-    Helper to check the consentDataStorage claim from the verified token.
-    Fails closed (returns False) if the field is missing or falsy.
-    FastAPI's prediction-saving logic calls this before persisting anything.
+    Checks the consentDataStorage claim. Fails closed (False) if missing.
+    Called before persisting any prediction to the database.
     """
     return bool(user.get("consentDataStorage", False))

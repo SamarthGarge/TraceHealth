@@ -1,15 +1,15 @@
-import { createAuthClient } from "better-auth/react";
-
 /**
- * Better Auth client instance for the frontend.
- * Replaces the hand-rolled AuthContext token management — see
- * docs/Auth_Service_Architecture.md §5 for the full rationale.
+ * authClient.js — REMOVED
  *
- * VITE_AUTH_SERVICE_URL must point at the running auth-service
- * (default: http://localhost:4000 in dev, the deployed Render URL in prod).
+ * Better Auth has been replaced by plain FastAPI endpoints.
+ * Use src/api/auth.js instead:
+ *
+ *   import { login, signup, logout, loginWithGoogle } from "../api/auth";
+ *
+ * Auth state is available via the AuthContext hook:
+ *
+ *   import { useAuth } from "../context/AuthContext";
+ *   const { user, isAuthenticated, logout } = useAuth();
  */
-export const authClient = createAuthClient({
-  baseURL: import.meta.env.VITE_AUTH_SERVICE_URL,
-});
 
-export const { signIn, signUp, signOut, useSession } = authClient;
+// This file is intentionally empty. Delete it when refactoring is complete.

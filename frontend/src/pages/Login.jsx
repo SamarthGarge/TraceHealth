@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signIn, signUp } from "../lib/authClient";
+import { login, loginWithGoogle } from "../api/auth";
+import { useAuth } from "../context/AuthContext";
 import { loginSchema } from "../utils/validation";
 
 /**
@@ -13,6 +14,7 @@ import { loginSchema } from "../utils/validation";
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { setUser } = useAuth();
   const from = location.state?.from?.pathname || "/dashboard";
 
   const [isLoading, setIsLoading] = useState(false);
@@ -27,28 +29,20 @@ export default function Login() {
   async function onSubmit(data) {
     setIsLoading(true);
     setServerError("");
-
-    const { error } = await signIn.email({
-      email: data.email,
-      password: data.password,
-    });
-
-    setIsLoading(false);
-
-    if (error) {
-      // Generic message — never reveal whether email or password is wrong (Backend §4.2)
-      setServerError("Invalid email or password. Please try again.");
-      return;
+    try {
+      const result = await login({ email: data.email, password: data.password });
+      setUser(result.user); // update AuthContext without a page reload
+      navigate(from, { replace: true });
+    } catch (err) {
+      const msg = err.response?.data?.detail || "Invalid email or password. Please try again.";
+      setServerError(msg);
+    } finally {
+      setIsLoading(false);
     }
-
-    navigate(from, { replace: true });
   }
 
-  async function handleGoogle() {
-    await signIn.social({
-      provider: "google",
-      callbackURL: from,
-    });
+  function handleGoogle() {
+    loginWithGoogle(); // plain window.location redirect to /api/auth/google
   }
 
   return (
