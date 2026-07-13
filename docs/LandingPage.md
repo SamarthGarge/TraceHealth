@@ -1,5 +1,10 @@
-import React, { useRef } from "react";
-import { Link } from "react-router-dom";
+# LandingPage Component
+
+A React landing page for a health risk prediction tool ("HealthRisk Predictor") featuring disease modules, multi-model comparison, SHAP explainability, and GSAP scroll animations.
+
+```jsx
+import React, { useEffect, useRef } from "react";
+import { Link } from "wouter";
 import {
   ArrowRight,
   Activity,
@@ -22,9 +27,8 @@ import {
 } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
 
-gsap.registerPlugin(ScrollTrigger, useGSAP);
+gsap.registerPlugin(ScrollTrigger);
 
 /* ─── Design tokens ─── */
 const T = {
@@ -241,7 +245,7 @@ const trustItems = [
 ];
 
 /* ─── Helpers ─── */
-function RiskGauge({ pct, color }) {
+function RiskGauge({ pct, color }: { pct: number; color: string }) {
   return (
     <div className="risk-gauge-wrap mt-6 mb-2">
       <div className="flex justify-between items-center mb-2">
@@ -274,7 +278,7 @@ function RiskGauge({ pct, color }) {
 
 function FactorBar({
   label, w, color, index,
-}) {
+}: { label: string; w: number; color: string; index: number }) {
   return (
     <div className="factor-bar-row">
       <div className="flex justify-between items-center mb-1">
@@ -293,190 +297,195 @@ function FactorBar({
 
 /* ─── Main component ─── */
 export default function LandingPage() {
-  const containerRef  = useRef(null);
-  const heroRef       = useRef(null);
-  const heroBlobL     = useRef(null);
-  const heroBlobR     = useRef(null);
-  const eyebrowRef    = useRef(null);
-  const headlineRef   = useRef(null);
-  const subRef        = useRef(null);
-  const ctaRef        = useRef(null);
-  const scrollHintRef = useRef(null);
+  const heroRef       = useRef<HTMLDivElement>(null);
+  const heroBlobL     = useRef<HTMLDivElement>(null);
+  const heroBlobR     = useRef<HTMLDivElement>(null);
+  const eyebrowRef    = useRef<HTMLDivElement>(null);
+  const headlineRef   = useRef<HTMLHeadingElement>(null);
+  const subRef        = useRef<HTMLParagraphElement>(null);
+  const ctaRef        = useRef<HTMLDivElement>(null);
+  const scrollHintRef = useRef<HTMLDivElement>(null);
 
   /* ── Hero entrance ── */
-  useGSAP(() => {
-    const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-    tl
-      .from(eyebrowRef.current, { y: 24, opacity: 0, duration: 0.65 })
-      .from(headlineRef.current, { y: 48, opacity: 0, duration: 1.0, ease: "power4.out" }, "-=0.35")
-      .from(subRef.current,      { y: 28, opacity: 0, duration: 0.75 }, "-=0.55")
-      .from(ctaRef.current,      { y: 22, opacity: 0, duration: 0.65 }, "-=0.45")
-      .from(scrollHintRef.current, { opacity: 0, duration: 0.9 }, "-=0.2");
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+      tl
+        .from(eyebrowRef.current, { y: 24, opacity: 0, duration: 0.65 })
+        .from(headlineRef.current, { y: 48, opacity: 0, duration: 1.0, ease: "power4.out" }, "-=0.35")
+        .from(subRef.current,      { y: 28, opacity: 0, duration: 0.75 }, "-=0.55")
+        .from(ctaRef.current,      { y: 22, opacity: 0, duration: 0.65 }, "-=0.45")
+        .from(scrollHintRef.current, { opacity: 0, duration: 0.9 }, "-=0.2");
 
-    /* Blob parallax on scroll */
-    gsap.to(heroBlobL.current, {
-      y: -80,
-      scrollTrigger: { trigger: heroRef.current, start: "top top", end: "bottom top", scrub: 1.8 },
-    });
-    gsap.to(heroBlobR.current, {
-      y: -50,
-      scrollTrigger: { trigger: heroRef.current, start: "top top", end: "bottom top", scrub: 1.2 },
-    });
-  }, { scope: heroRef });
+      /* Blob parallax on scroll */
+      gsap.to(heroBlobL.current, {
+        y: -80,
+        scrollTrigger: { trigger: heroRef.current, start: "top top", end: "bottom top", scrub: 1.8 },
+      });
+      gsap.to(heroBlobR.current, {
+        y: -50,
+        scrollTrigger: { trigger: heroRef.current, start: "top top", end: "bottom top", scrub: 1.2 },
+      });
+    }, heroRef);
+    return () => ctx.revert();
+  }, []);
 
   /* ── ScrollTrigger animations ── */
-  useGSAP(() => {
-    /* ── Stats: fade-stagger ── */
-    gsap.from(".stat-item", {
-      y: 36, opacity: 0, duration: 0.75, stagger: 0.13, ease: "power3.out",
-      immediateRender: false,
-      scrollTrigger: { trigger: ".stats-section", start: "top 82%" },
-    });
-
-    /* ── Section eyebrow labels clip-reveal ── */
-    gsap.utils.toArray(".eyebrow-label").forEach((el) => {
-      gsap.from(el, {
-        clipPath: "inset(0 100% 0 0)",
-        opacity: 0,
-        duration: 0.6,
-        ease: "power2.out",
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      /* ── Stats: fade-stagger ── */
+      gsap.from(".stat-item", {
+        y: 36, opacity: 0, duration: 0.75, stagger: 0.13, ease: "power3.out",
         immediateRender: false,
-        scrollTrigger: { trigger: el, start: "top 90%" },
+        scrollTrigger: { trigger: ".stats-section", start: "top 82%" },
+      });
+
+      /* ── Section eyebrow labels clip-reveal ── */
+      gsap.utils.toArray<HTMLElement>(".eyebrow-label").forEach((el) => {
+        gsap.from(el, {
+          clipPath: "inset(0 100% 0 0)",
+          opacity: 0,
+          duration: 0.6,
+          ease: "power2.out",
+          immediateRender: false,
+          scrollTrigger: { trigger: el, start: "top 90%" },
+        });
+      });
+
+      /* ── Section headings slide-up ── */
+      gsap.utils.toArray<HTMLElement>(".section-heading").forEach((el) => {
+        gsap.from(el, {
+          y: 44, opacity: 0, duration: 0.9, ease: "power3.out",
+          immediateRender: false,
+          scrollTrigger: { trigger: el, start: "top 88%" },
+        });
+      });
+
+      /* ── Disease cards: column-aware stagger ── */
+      gsap.from(".disease-card:nth-child(odd)", {
+        x: -36, opacity: 0, duration: 0.8, stagger: 0.16, ease: "power3.out",
+        immediateRender: false,
+        scrollTrigger: { trigger: ".diseases-section", start: "top 80%" },
+      });
+      gsap.from(".disease-card:nth-child(even)", {
+        x: 36, opacity: 0, duration: 0.8, stagger: 0.16, ease: "power3.out",
+        immediateRender: false,
+        scrollTrigger: { trigger: ".diseases-section", start: "top 80%" },
+      });
+
+      /* Risk gauge fills (width from 0) */
+      gsap.from(".risk-gauge-fill", {
+        width: 0, duration: 1.2, ease: "power3.out", stagger: 0.12,
+        immediateRender: false,
+        scrollTrigger: { trigger: ".diseases-section", start: "top 78%" },
+      });
+
+      /* Factor bars animate */
+      gsap.from(".factor-bar", {
+        width: 0, duration: 0.8, ease: "power2.out", stagger: 0.04,
+        immediateRender: false,
+        scrollTrigger: { trigger: ".diseases-section", start: "top 76%" },
+      });
+
+      /* ── How it works: scrub step connector line ── */
+      gsap.set(".step-line", { scaleY: 0, transformOrigin: "top center" });
+      gsap.to(".step-line", {
+        scaleY: 1,
+        ease: "none",
+        scrollTrigger: {
+          trigger: ".steps-section",
+          start: "top 70%",
+          end: "bottom 60%",
+          scrub: 0.8,
+        },
+      });
+
+      gsap.from(".step-item", {
+        x: -44, opacity: 0, duration: 0.8, stagger: 0.18, ease: "power3.out",
+        immediateRender: false,
+        scrollTrigger: { trigger: ".steps-section", start: "top 80%" },
+      });
+
+      /* ── Model comparison ── */
+      gsap.from(".models-text-col", {
+        x: -40, opacity: 0, duration: 0.9, ease: "power3.out",
+        immediateRender: false,
+        scrollTrigger: { trigger: ".models-section", start: "top 80%" },
+      });
+      gsap.from(".models-panel", {
+        x: 40, opacity: 0, duration: 0.9, ease: "power3.out",
+        immediateRender: false,
+        scrollTrigger: { trigger: ".models-section", start: "top 80%" },
+      });
+      gsap.from(".model-bar-inner", {
+        scaleX: 0, transformOrigin: "left center",
+        duration: 1.1, stagger: 0.2, ease: "power3.out",
+        immediateRender: false,
+        scrollTrigger: { trigger: ".models-section", start: "top 74%" },
+      });
+
+      /* ── Bento features ── */
+      gsap.from(".bento-shap", {
+        y: 50, opacity: 0, duration: 0.95, ease: "power3.out",
+        immediateRender: false,
+        scrollTrigger: { trigger: ".features-section", start: "top 80%" },
+      });
+      gsap.from(".bento-multimodel", {
+        y: 50, opacity: 0, duration: 0.85, ease: "power3.out",
+        immediateRender: false,
+        scrollTrigger: { trigger: ".features-section", start: "top 78%", delay: 0.1 },
+      });
+      gsap.from(".bento-history", {
+        y: 50, opacity: 0, duration: 0.85, ease: "power3.out",
+        immediateRender: false,
+        scrollTrigger: { trigger: ".features-section", start: "top 76%", delay: 0.22 },
+      });
+      gsap.from(".bento-privacy", {
+        y: 40, opacity: 0, duration: 0.85, ease: "power3.out",
+        immediateRender: false,
+        scrollTrigger: { trigger: ".features-section", start: "top 74%" },
+      });
+
+      /* Bento SHAP bars animate left→right */
+      gsap.from(".shap-bar-fill", {
+        width: 0, duration: 0.9, stagger: 0.1, ease: "power3.out",
+        immediateRender: false,
+        scrollTrigger: { trigger: ".features-section", start: "top 74%" },
+      });
+
+      /* History sparkline path draw */
+      gsap.from(".spark-path", {
+        strokeDashoffset: 300, duration: 1.4, ease: "power2.out",
+        immediateRender: false,
+        scrollTrigger: { trigger: ".features-section", start: "top 74%" },
+      });
+
+      /* ── Workflow paths ── */
+      gsap.from(".path-card", {
+        y: 52, opacity: 0, scale: 0.97, duration: 0.85, stagger: 0.16, ease: "power3.out",
+        immediateRender: false,
+        scrollTrigger: { trigger: ".paths-section", start: "top 80%" },
+      });
+
+      /* ── Trust items ── */
+      gsap.from(".trust-item", {
+        x: 32, opacity: 0, duration: 0.7, stagger: 0.1, ease: "power2.out",
+        immediateRender: false,
+        scrollTrigger: { trigger: ".trust-section", start: "top 80%" },
+      });
+
+      /* ── CTA ── */
+      gsap.from(".cta-inner", {
+        scale: 0.96, opacity: 0, duration: 0.95, ease: "power3.out",
+        immediateRender: false,
+        scrollTrigger: { trigger: ".cta-section", start: "top 84%" },
       });
     });
-
-    /* ── Section headings slide-up ── */
-    gsap.utils.toArray(".section-heading").forEach((el) => {
-      gsap.from(el, {
-        y: 44, opacity: 0, duration: 0.9, ease: "power3.out",
-        immediateRender: false,
-        scrollTrigger: { trigger: el, start: "top 88%" },
-      });
-    });
-
-    /* ── Disease cards: column-aware stagger ── */
-    gsap.from(".disease-card:nth-child(odd)", {
-      x: -36, opacity: 0, duration: 0.8, stagger: 0.16, ease: "power3.out",
-      immediateRender: false,
-      scrollTrigger: { trigger: ".diseases-section", start: "top 80%" },
-    });
-    gsap.from(".disease-card:nth-child(even)", {
-      x: 36, opacity: 0, duration: 0.8, stagger: 0.16, ease: "power3.out",
-      immediateRender: false,
-      scrollTrigger: { trigger: ".diseases-section", start: "top 80%" },
-    });
-
-    /* Risk gauge fills (width from 0) */
-    gsap.from(".risk-gauge-fill", {
-      width: 0, duration: 1.2, ease: "power3.out", stagger: 0.12,
-      immediateRender: false,
-      scrollTrigger: { trigger: ".diseases-section", start: "top 78%" },
-    });
-
-    /* Factor bars animate */
-    gsap.from(".factor-bar", {
-      width: 0, duration: 0.8, ease: "power2.out", stagger: 0.04,
-      immediateRender: false,
-      scrollTrigger: { trigger: ".diseases-section", start: "top 76%" },
-    });
-
-    /* ── How it works: scrub step connector line ── */
-    gsap.set(".step-line", { scaleY: 0, transformOrigin: "top center" });
-    gsap.to(".step-line", {
-      scaleY: 1,
-      ease: "none",
-      scrollTrigger: {
-        trigger: ".steps-section",
-        start: "top 70%",
-        end: "bottom 60%",
-        scrub: 0.8,
-      },
-    });
-
-    gsap.from(".step-item", {
-      x: -44, opacity: 0, duration: 0.8, stagger: 0.18, ease: "power3.out",
-      immediateRender: false,
-      scrollTrigger: { trigger: ".steps-section", start: "top 80%" },
-    });
-
-    /* ── Model comparison ── */
-    gsap.from(".models-text-col", {
-      x: -40, opacity: 0, duration: 0.9, ease: "power3.out",
-      immediateRender: false,
-      scrollTrigger: { trigger: ".models-section", start: "top 80%" },
-    });
-    gsap.from(".models-panel", {
-      x: 40, opacity: 0, duration: 0.9, ease: "power3.out",
-      immediateRender: false,
-      scrollTrigger: { trigger: ".models-section", start: "top 80%" },
-    });
-    gsap.from(".model-bar-inner", {
-      scaleX: 0, transformOrigin: "left center",
-      duration: 1.1, stagger: 0.2, ease: "power3.out",
-      immediateRender: false,
-      scrollTrigger: { trigger: ".models-section", start: "top 74%" },
-    });
-
-    /* ── Bento features ── */
-    gsap.from(".bento-shap", {
-      y: 50, opacity: 0, duration: 0.95, ease: "power3.out",
-      immediateRender: false,
-      scrollTrigger: { trigger: ".features-section", start: "top 80%" },
-    });
-    gsap.from(".bento-multimodel", {
-      y: 50, opacity: 0, duration: 0.85, ease: "power3.out",
-      immediateRender: false,
-      scrollTrigger: { trigger: ".features-section", start: "top 78%", delay: 0.1 },
-    });
-    gsap.from(".bento-history", {
-      y: 50, opacity: 0, duration: 0.85, ease: "power3.out",
-      immediateRender: false,
-      scrollTrigger: { trigger: ".features-section", start: "top 76%", delay: 0.22 },
-    });
-    gsap.from(".bento-privacy", {
-      y: 40, opacity: 0, duration: 0.85, ease: "power3.out",
-      immediateRender: false,
-      scrollTrigger: { trigger: ".features-section", start: "top 74%" },
-    });
-
-    /* Bento SHAP bars animate left→right */
-    gsap.from(".shap-bar-fill", {
-      width: 0, duration: 0.9, stagger: 0.1, ease: "power3.out",
-      immediateRender: false,
-      scrollTrigger: { trigger: ".features-section", start: "top 74%" },
-    });
-
-    /* History sparkline path draw */
-    gsap.from(".spark-path", {
-      strokeDashoffset: 300, duration: 1.4, ease: "power2.out",
-      immediateRender: false,
-      scrollTrigger: { trigger: ".features-section", start: "top 74%" },
-    });
-
-    /* ── Workflow paths ── */
-    gsap.from(".path-card", {
-      y: 52, opacity: 0, scale: 0.97, duration: 0.85, stagger: 0.16, ease: "power3.out",
-      immediateRender: false,
-      scrollTrigger: { trigger: ".paths-section", start: "top 80%" },
-    });
-
-    /* ── Trust items ── */
-    gsap.from(".trust-item", {
-      x: 32, opacity: 0, duration: 0.7, stagger: 0.1, ease: "power2.out",
-      immediateRender: false,
-      scrollTrigger: { trigger: ".trust-section", start: "top 80%" },
-    });
-
-    /* ── CTA ── */
-    gsap.from(".cta-inner", {
-      scale: 0.96, opacity: 0, duration: 0.95, ease: "power3.out",
-      immediateRender: false,
-      scrollTrigger: { trigger: ".cta-section", start: "top 84%" },
-    });
-  }, { scope: containerRef });
+    return () => ctx.revert();
+  }, []);
 
   return (
-    <div ref={containerRef} className="min-h-screen overflow-x-hidden font-sans" style={{ background: T.parchment, color: T.ink }}>
+    <div className="min-h-screen overflow-x-hidden" style={{ background: T.parchment, color: T.ink }}>
 
       {/* ── Navbar ── */}
       <header
@@ -487,7 +496,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-2.5">
             <Activity className="h-5 w-5" style={{ color: T.terra }} />
             <span className="font-serif text-xl font-semibold" style={{ color: T.ink }}>
-              TraceHealth
+              HealthRisk Predictor
             </span>
           </div>
           <nav className="hidden md:flex gap-8 items-center">
@@ -505,13 +514,13 @@ export default function LandingPage() {
             ))}
           </nav>
           <div className="flex items-center gap-3">
-            <Link to="/login">
+            <Link href="/login">
               <button className="text-sm font-medium px-4 py-2 rounded-lg transition-opacity hover:opacity-60"
                 style={{ color: T.inkMid }}>
                 Log in
               </button>
             </Link>
-            <Link to="/signup">
+            <Link href="/signup">
               <button
                 className="text-sm font-semibold px-5 py-2.5 rounded-lg transition-all hover:opacity-90"
                 style={{ background: T.terra, color: "#fff" }}
@@ -564,7 +573,7 @@ export default function LandingPage() {
             </p>
 
             <div ref={ctaRef} className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-              <Link to="/signup">
+              <Link href="/signup">
                 <button
                   className="inline-flex items-center gap-2.5 px-9 py-4 rounded-xl text-base font-semibold shadow-lg transition-all hover:opacity-90 hover:shadow-xl hover:-translate-y-0.5"
                   style={{ background: T.terra, color: "#fff" }}
@@ -573,7 +582,7 @@ export default function LandingPage() {
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </Link>
-              <Link to="/login">
+              <Link href="/login">
                 <button
                   className="px-9 py-4 rounded-xl text-base font-medium transition-all hover:opacity-70"
                   style={{ border: `1.5px solid ${T.border}`, color: T.inkMid, background: "transparent" }}
@@ -1212,7 +1221,7 @@ export default function LandingPage() {
               No credit card required. Create an account, run your first prediction, and see exactly
               why the model scored you the way it did — all in under five minutes.
             </p>
-            <Link to="/signup">
+            <Link href="/signup">
               <button
                 className="inline-flex items-center gap-3 px-10 py-4 rounded-xl text-base font-semibold transition-all hover:opacity-90 hover:-translate-y-0.5 group"
                 style={{ background: T.terra, color: "#fff", boxShadow: `0 8px 40px ${T.terra}50` }}
@@ -1248,3 +1257,4 @@ export default function LandingPage() {
     </div>
   );
 }
+```
