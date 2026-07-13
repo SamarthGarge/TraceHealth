@@ -57,9 +57,11 @@ app = FastAPI(
         "HealthRisk Predictor — ML-powered disease risk screening with explainability. "
         "EDUCATIONAL TOOL ONLY. Not a medical diagnosis."
     ),
-    # Disable interactive docs in production (security hardening — Backend doc §4.6)
-    docs_url=None if settings.is_production else "/docs",
-    redoc_url=None if settings.is_production else "/redoc",
+    # Disable the built-in docs endpoints — they load assets from jsDelivr CDN
+    # which can be blocked on some networks. We serve custom endpoints below
+    # that use unpkg (more reliable) and also work behind strict CSPs.
+    docs_url=None,
+    redoc_url=None,
     lifespan=lifespan,
 )
 
@@ -89,7 +91,29 @@ async def health_check():
     return {"status": "ok", "service": "tracehealth-api"}
 
 
-# Routers
+# ── API Docs (custom endpoints using unpkg CDN — avoids jsDelivr blocks) ─────
+# Only available in development. Disabled entirely in production.
+if not settings.is_production:
+    from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
+
+    @app.get("/docs", include_in_schema=False)
+    async def swagger_ui():
+        return get_swagger_ui_html(
+            openapi_url="/openapi.json",
+            title="TraceHealth API — Swagger UI",
+            swagger_js_url="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js",
+            swagger_css_url="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css",
+            swagger_ui_parameters={"persistAuthorization": True},
+        )
+
+    @app.get("/redoc", include_in_schema=False)
+    async def redoc_ui():
+        return get_redoc_html(
+            openapi_url="/openapi.json",
+            title="TraceHealth API — ReDoc",
+            redoc_js_url="https://unpkg.com/redoc@latest/bundles/redoc.standalone.js",
+        )
+
 app.include_router(auth.router, prefix="/api", tags=["Auth"])
 app.include_router(users.router, prefix="/api", tags=["Users"])
 app.include_router(models_info.router, prefix="/api", tags=["Models"])
