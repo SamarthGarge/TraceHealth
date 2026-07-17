@@ -6,6 +6,7 @@ import AuthGuard from "./components/layout/AuthGuard";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import OAuthCallback from "./pages/OAuthCallback";
 import NotFound from "./pages/NotFound";
 
 // Lazy-loaded pages (code-split by route for performance)
@@ -42,10 +43,11 @@ export default function App() {
     <Suspense fallback={<PageLoader />}>
       <Routes>
         {/* ── Public ──────────────────────────────────────────────── */}
-        <Route path="/"           element={<Landing />} />
-        <Route path="/login"      element={<Login />} />
-        <Route path="/signup"     element={<Signup />} />
-        <Route path="/insights"   element={<Insights />} />
+        <Route path="/"                element={<Landing />} />
+        <Route path="/login"           element={<Login />} />
+        <Route path="/signup"          element={<Signup />} />
+        <Route path="/auth/callback"   element={<OAuthCallback />} />
+        <Route path="/insights"        element={<Insights />} />
 
         {/* Guest + Auth — predictions and symptom check work for everyone */}
         <Route path="/predict/:disease"  element={<Predict />} />

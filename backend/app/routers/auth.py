@@ -213,10 +213,16 @@ async def google_login():
 
 
 @router.get("/auth/google/callback")
-async def google_callback(code: str, response: Response):
+async def google_callback(code: str):
     """
     Receives the auth code from Google, exchanges it for user info,
-    upserts the user in MongoDB, and sets auth cookies.
+    upserts the user in MongoDB, sets auth cookies on the redirect response,
+    and sends the user to the frontend /auth/callback page.
+
+    NOTE: Cookies must be set on the RedirectResponse object itself — not on a
+    separate Response dependency — because FastAPI returns the RedirectResponse
+    as the actual HTTP response sent to the browser.
+    Uses 302 (not 307) so the browser follows with a GET request.
     """
     if not settings.GOOGLE_CLIENT_ID:
         raise HTTPException(status_code=501, detail="Google OAuth is not configured.")
@@ -272,6 +278,15 @@ async def google_callback(code: str, response: Response):
         return_document=True,
     )
 
-    _set_auth_cookies(response, result)
-    # Redirect back to the frontend dashboard after OAuth
-    return RedirectResponse(f"{settings.FRONTEND_ORIGIN}/dashboard")
+    # 4. Build the redirect response and set auth cookies directly on it.
+    #    Must use the RedirectResponse object — a separate Response() dependency
+    #    won't carry its cookies to the browser when a different object is returned.
+    #    Use 302 (not 307) so browsers follow with a GET to /auth/callback.
+    redirect = RedirectResponse(
+        url=f"{settings.FRONTEND_ORIGIN}/auth/callback",
+        status_code=302,
+    )
+    _set_auth_cookies(redirect, result)
+    logger.info("Google OAuth success: %s", guser["email"])
+    return redirect
+
