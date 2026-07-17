@@ -350,3 +350,7 @@ body {
 .auth-error {
   @apply mt-1.5 text-xs text-status-high;
 }
+
+/* ── Scrollbar hide — horizontal scroll-snap containers ──────────────────── */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
