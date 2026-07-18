@@ -1,10 +1,179 @@
 {
-  "diabetes": {},
-  "heart": {},
-  "tb": {},
-  "cancer": {},
+  "diabetes": {
+    "models": {
+      "lr": {
+        "accuracy": 0.7013,
+        "precision": 0.587,
+        "recall": 0.5,
+        "f1": 0.54,
+        "roc_auc": 0.8128
+      },
+      "rf": {
+        "accuracy": 0.7532,
+        "precision": 0.6818,
+        "recall": 0.5556,
+        "f1": 0.6122,
+        "roc_auc": 0.8167
+      },
+      "xgb": {
+        "accuracy": 0.7662,
+        "precision": 0.68,
+        "recall": 0.6296,
+        "f1": 0.6538,
+        "roc_auc": 0.8189
+      }
+    },
+    "features": [
+      "Pregnancies",
+      "Glucose",
+      "BloodPressure",
+      "SkinThickness",
+      "Insulin",
+      "BMI",
+      "DiabetesPedigreeFunction",
+      "Age"
+    ],
+    "n_train": 614,
+    "n_test": 154,
+    "trained_at": "2026-07-18T06:14:04.099562+00:00"
+  },
+  "heart": {
+    "models": {
+      "lr": {
+        "accuracy": 0.9167,
+        "precision": 1.0,
+        "recall": 0.8214,
+        "f1": 0.902,
+        "roc_auc": 0.9531
+      },
+      "rf": {
+        "accuracy": 0.8667,
+        "precision": 0.9545,
+        "recall": 0.75,
+        "f1": 0.84,
+        "roc_auc": 0.9632
+      },
+      "xgb": {
+        "accuracy": 0.85,
+        "precision": 0.88,
+        "recall": 0.7857,
+        "f1": 0.8302,
+        "roc_auc": 0.9386
+      }
+    },
+    "features": [
+      "age",
+      "sex",
+      "cp",
+      "trestbps",
+      "chol",
+      "fbs",
+      "restecg",
+      "thalach",
+      "exang",
+      "oldpeak",
+      "slope",
+      "ca",
+      "thal"
+    ],
+    "n_train": 237,
+    "n_test": 60,
+    "trained_at": "2026-07-18T06:14:12.394267+00:00"
+  },
+  "tb": {
+    "models": {
+      "lr": {
+        "accuracy": 0.9133,
+        "precision": 0.9307,
+        "recall": 0.94,
+        "f1": 0.9353,
+        "roc_auc": 0.9589
+      },
+      "rf": {
+        "accuracy": 0.9067,
+        "precision": 0.9343,
+        "recall": 0.925,
+        "f1": 0.9296,
+        "roc_auc": 0.9503
+      },
+      "xgb": {
+        "accuracy": 0.89,
+        "precision": 0.9372,
+        "recall": 0.895,
+        "f1": 0.9156,
+        "roc_auc": 0.953
+      }
+    },
+    "features": [
+      "gender",
+      "fever_2wk",
+      "cough_blood",
+      "sputum_blood",
+      "night_sweats",
+      "chest_pain",
+      "back_pain",
+      "shortness_breath",
+      "weight_loss",
+      "fatigue",
+      "lymph_lumps",
+      "cough_phlegm_2_4wk",
+      "swollen_lymph",
+      "loss_appetite"
+    ],
+    "n_train": 1200,
+    "n_test": 300,
+    "trained_at": "2026-07-18T06:14:21.884333+00:00"
+  },
+  "cancer": {
+    "models": {
+      "lr": {
+        "accuracy": 0.9032,
+        "precision": 0.9444,
+        "recall": 0.9444,
+        "f1": 0.9444,
+        "roc_auc": 0.9468
+      },
+      "rf": {
+        "accuracy": 0.9194,
+        "precision": 0.9623,
+        "recall": 0.9444,
+        "f1": 0.9533,
+        "roc_auc": 0.9468
+      },
+      "xgb": {
+        "accuracy": 0.8871,
+        "precision": 0.9273,
+        "recall": 0.9444,
+        "f1": 0.9358,
+        "roc_auc": 0.9329
+      }
+    },
+    "features": [
+      "GENDER",
+      "AGE",
+      "SMOKING",
+      "YELLOW_FINGERS",
+      "ANXIETY",
+      "PEER_PRESSURE",
+      "CHRONIC_DISEASE",
+      "FATIGUE",
+      "ALLERGY",
+      "WHEEZING",
+      "ALCOHOL_CONSUMING",
+      "COUGHING",
+      "SHORTNESS_OF_BREATH",
+      "SWALLOWING_DIFFICULTY",
+      "CHEST_PAIN"
+    ],
+    "n_train": 247,
+    "n_test": 62,
+    "trained_at": "2026-07-18T06:14:31.310123+00:00"
+  },
   "tb_xray_model": {},
   "cancer_image_model": {},
   "symptom_classifier": {},
-  "framingham": { "type": "formula", "note": "No trained artifact — see core/framingham.py" }
+  "framingham": {
+    "type": "formula",
+    "note": "No trained artifact \u00e2\u20ac\u201d see core/framingham.py"
+  }
 }
