@@ -22,8 +22,8 @@ from app.routers import users     # profile update, account deletion
 
 # Phase 3 -- Predictions & History
 from app.routers import predict, history
-# Phase 5+
-# from app.routers import uploads
+# Phase 5 -- File Uploads
+from app.routers import uploads
 # Phase 9+
 # from app.routers import export
 # Phase 10+
@@ -121,7 +121,8 @@ app.include_router(models_info.router, prefix="/api", tags=["Models"])
 app.include_router(predict.router, prefix="/api", tags=["Predictions"])
 app.include_router(history.router, prefix="/api", tags=["History"])
 
-# app.include_router(uploads.router, prefix="/api", tags=["Uploads"])
+# Phase 5 -- File Uploads
+app.include_router(uploads.router, prefix="/api", tags=["Uploads"])
 # app.include_router(export.router, prefix="/api", tags=["Export"])
 # app.include_router(admin.router, prefix="/api", tags=["Admin"])
 # app.include_router(symptom_check.router, prefix="/api", tags=["Symptom Check"])
