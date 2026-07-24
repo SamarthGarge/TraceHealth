@@ -1,0 +1,38 @@
+classDiagram
+    class PredictRequest {
+        +dict~str, float~ features
+    }
+
+    class ShapFeature {
+        +str feature
+        +float value
+        +float shap_value
+        +str direction
+    }
+
+    class ModelResult {
+        +str model_key
+        +str model_name
+        +float probability
+        +str risk_level
+        +list~ShapFeature~ shap_top
+    }
+
+    class PredictResponse {
+        +str disease
+        +list~ModelResult~ models
+        +float ensemble_probability
+        +str ensemble_risk_level
+        +str prediction_id
+    }
+
+    class HistoryItem {
+        +str id
+        +str disease
+        +float ensemble_probability
+        +str ensemble_risk_level
+        +str created_at
+    }
+
+    PredictResponse o-- ModelResult
+    ModelResult o-- ShapFeature

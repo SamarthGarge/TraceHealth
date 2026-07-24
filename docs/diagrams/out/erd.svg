@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 602.44 458" width="602.44" height="458" style="--bg:#1a1b26;--fg:#a9b1d6;--line:#3d59a1;--accent:#7aa2f7;--muted:#565f89;background:var(--bg)">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  .mono { font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', ui-monospace, monospace; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 30%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+<defs>
+</defs>
+<polyline points="242.2,144 360.24,144" fill="none" stroke="var(--_line)" stroke-width="0.75" />
+<rect x="40" y="62" width="202.2" height="164" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+<rect x="40" y="62" width="202.2" height="32" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+<text x="141.1" y="78" text-anchor="middle" dy="0.35em" font-size="13" font-weight="700" fill="var(--_text)">USERS</text>
+<line x1="40" y1="94" x2="242.2" y2="94" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="46" y="98" width="18.439999999999998" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+<text x="55.22" y="105" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">PK</text>
+<text x="72.44" y="105" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">ObjectId</tspan></text>
+<text x="234.2" y="105" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">_id</tspan></text>
+<rect x="46" y="120" width="18.439999999999998" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+<text x="55.22" y="127" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">UK</text>
+<text x="72.44" y="127" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">string</tspan></text>
+<text x="234.2" y="127" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">email</tspan></text>
+<text x="48" y="149" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">string</tspan></text>
+<text x="234.2" y="149" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">auth_provider</tspan></text>
+<text x="48" y="171" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">string</tspan></text>
+<text x="234.2" y="171" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">role</tspan></text>
+<text x="48" y="193" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">boolean</tspan></text>
+<text x="234.2" y="193" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">consentDataStorage</tspan></text>
+<text x="48" y="215" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">datetime</tspan></text>
+<text x="234.2" y="215" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">created_at</tspan></text>
+<rect x="360.24" y="40" width="202.2" height="208" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+<rect x="360.24" y="40" width="202.2" height="32" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+<text x="461.34000000000003" y="56" text-anchor="middle" dy="0.35em" font-size="13" font-weight="700" fill="var(--_text)">PREDICTIONS</text>
+<line x1="360.24" y1="72" x2="562.44" y2="72" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="366.24" y="76" width="18.439999999999998" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+<text x="375.46000000000004" y="83" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">PK</text>
+<text x="392.68" y="83" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">ObjectId</tspan></text>
+<text x="554.44" y="83" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">_id</tspan></text>
+<rect x="366.24" y="98" width="18.439999999999998" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+<text x="375.46000000000004" y="105" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">FK</text>
+<text x="392.68" y="105" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">string</tspan></text>
+<text x="554.44" y="105" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">user_id</tspan></text>
+<text x="368.24" y="127" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">string</tspan></text>
+<text x="554.44" y="127" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">disease</tspan></text>
+<text x="368.24" y="149" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">json</tspan></text>
+<text x="554.44" y="149" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">features</tspan></text>
+<text x="368.24" y="171" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">json</tspan></text>
+<text x="554.44" y="171" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">models</tspan></text>
+<text x="368.24" y="193" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">float</tspan></text>
+<text x="554.44" y="193" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">ensemble_probability</tspan></text>
+<text x="368.24" y="215" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">string</tspan></text>
+<text x="554.44" y="215" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">ensemble_risk_level</tspan></text>
+<text x="368.24" y="237" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">datetime</tspan></text>
+<text x="554.44" y="237" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">created_at</tspan></text>
+<rect x="63.099999999999994" y="276" width="156" height="142" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+<rect x="63.099999999999994" y="276" width="156" height="32" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+<text x="141.1" y="292" text-anchor="middle" dy="0.35em" font-size="13" font-weight="700" fill="var(--_text)">MODEL_METADATA</text>
+<line x1="63.099999999999994" y1="308" x2="219.1" y2="308" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="69.1" y="312" width="18.439999999999998" height="14" rx="2" ry="2" fill="var(--_key-badge)" />
+<text x="78.32" y="319" text-anchor="middle" dy="0.35em" font-size="9" font-weight="600" fill="var(--_text-sec)">PK</text>
+<text x="95.53999999999999" y="319" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">ObjectId</tspan></text>
+<text x="211.1" y="319" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">_id</tspan></text>
+<text x="71.1" y="341" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">string</tspan></text>
+<text x="211.1" y="341" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">disease</tspan></text>
+<text x="71.1" y="363" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">json</tspan></text>
+<text x="211.1" y="363" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">models</tspan></text>
+<text x="71.1" y="385" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">array</tspan></text>
+<text x="211.1" y="385" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">features</tspan></text>
+<text x="71.1" y="407" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-muted)">datetime</tspan></text>
+<text x="211.1" y="407" class="mono" text-anchor="end" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-sec)">trained_at</tspan></text>
+<line x1="246.2" y1="138" x2="246.2" y2="150" stroke="var(--_line)" stroke-width="1" />
+<line x1="250.2" y1="138" x2="250.2" y2="150" stroke="var(--_line)" stroke-width="1" />
+<line x1="356.24" y1="151" x2="344.24" y2="144" stroke="var(--_line)" stroke-width="1" />
+<line x1="356.24" y1="144" x2="344.24" y2="144" stroke="var(--_line)" stroke-width="1" />
+<line x1="356.24" y1="137" x2="344.24" y2="144" stroke="var(--_line)" stroke-width="1" />
+<circle cx="340.24" cy="144" r="4" fill="var(--bg)" stroke="var(--_line)" stroke-width="1" />
+<rect x="277.20000000000005" y="135.5" width="48.04" height="17" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="0.5" />
+<text x="301.22" y="144" text-anchor="middle" dy="0.35em" font-size="11" font-weight="400" fill="var(--_text-muted)">&quot;makes&quot;</text>
+</svg>

@@ -1,0 +1,32 @@
+flowchart LR
+    %% Actors
+    U((Guest User))
+    AU((Authenticated User))
+    A((Admin))
+
+    %% System Boundary
+    subgraph TraceHealth System
+        P[Run Disease Prediction]
+        H[View Prediction History]
+        D[Delete Prediction]
+        M[View Model Metrics]
+        L[Login/Signup]
+        C[Consent to Data Storage]
+    end
+
+    %% Relationships
+    U --> P
+    U --> M
+    U --> L
+
+    AU --> P
+    AU --> H
+    AU --> D
+    AU --> M
+    AU --> C
+    
+    A --> M
+    %% Admins have AU privileges implicitly
+
+    %% Include relationships (dashed lines conceptually)
+    P -.->|If authenticated & consented| C

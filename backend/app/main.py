@@ -20,8 +20,8 @@ from app.routers import models_info
 from app.routers import auth      # signup, login, logout, /me, Google OAuth
 from app.routers import users     # profile update, account deletion
 
-# Phase 3+
-# from app.routers import predict, history
+# Phase 3 -- Predictions & History
+from app.routers import predict, history
 # Phase 5+
 # from app.routers import uploads
 # Phase 9+
@@ -41,9 +41,8 @@ async def lifespan(app: FastAPI):
     await init_db()
 
     # Load ML models into memory at startup so predictions never pay disk I/O
-    # (commented out until Phase 3 training is complete)
-    # from app.core.model_loader import load_all_models
-    # load_all_models()
+    from app.core.model_loader import load_all_models
+    load_all_models()
 
     yield
 
@@ -118,9 +117,10 @@ app.include_router(auth.router, prefix="/api", tags=["Auth"])
 app.include_router(users.router, prefix="/api", tags=["Users"])
 app.include_router(models_info.router, prefix="/api", tags=["Models"])
 
-# Phase 3+ — uncomment as implemented:
-# app.include_router(predict.router, prefix="/api", tags=["Predictions"])
-# app.include_router(history.router, prefix="/api", tags=["History"])
+# Phase 3 -- Predictions & History
+app.include_router(predict.router, prefix="/api", tags=["Predictions"])
+app.include_router(history.router, prefix="/api", tags=["History"])
+
 # app.include_router(uploads.router, prefix="/api", tags=["Uploads"])
 # app.include_router(export.router, prefix="/api", tags=["Export"])
 # app.include_router(admin.router, prefix="/api", tags=["Admin"])

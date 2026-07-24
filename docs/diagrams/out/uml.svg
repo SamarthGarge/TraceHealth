@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 775.5999999999999 624" width="775.5999999999999" height="624" style="--bg:#1a1b26;--fg:#a9b1d6;--line:#3d59a1;--accent:#7aa2f7;--muted:#565f89;background:var(--bg)">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  .mono { font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', ui-monospace, monospace; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 30%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+<defs>
+  <marker id="cls-inherit" markerWidth="12" markerHeight="10" refX="12" refY="5" orient="auto-start-reverse">
+    <polygon points="0 0, 12 5, 0 10" fill="var(--bg)" stroke="var(--_arrow)" stroke-width="1.5" />
+  </marker>
+  <marker id="cls-composition" markerWidth="12" markerHeight="10" refX="0" refY="5" orient="auto-start-reverse">
+    <polygon points="6 0, 12 5, 6 10, 0 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="1" />
+  </marker>
+  <marker id="cls-aggregation" markerWidth="12" markerHeight="10" refX="0" refY="5" orient="auto-start-reverse">
+    <polygon points="6 0, 12 5, 6 10, 0 5" fill="var(--bg)" stroke="var(--_arrow)" stroke-width="1.5" />
+  </marker>
+  <marker id="cls-arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto-start-reverse">
+    <polyline points="0 0, 8 3, 0 6" fill="none" stroke="var(--_arrow)" stroke-width="1.5" />
+  </marker>
+</defs>
+<polyline points="384.49999999999994,188 384.49999999999994,248" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-start="url(#cls-aggregation)" />
+<polyline points="384.49999999999994,396 384.49999999999994,456" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-start="url(#cls-aggregation)" />
+<rect x="39.999999999999986" y="80" width="200.79999999999998" height="68" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+<rect x="39.999999999999986" y="80" width="200.79999999999998" height="32" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+<text x="140.39999999999998" y="96" text-anchor="middle" dy="0.35em" font-size="13" font-weight="700" fill="var(--_text)">PredictRequest</text>
+<line x1="39.999999999999986" y1="112" x2="240.79999999999995" y2="112" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<text x="47.999999999999986" y="126" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">float~ features</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">dict~str,</tspan></text>
+<line x1="39.999999999999986" y1="140" x2="240.79999999999995" y2="140" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="313.79999999999995" y="456" width="141.39999999999998" height="128" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+<rect x="313.79999999999995" y="456" width="141.39999999999998" height="32" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+<text x="384.49999999999994" y="472" text-anchor="middle" dy="0.35em" font-size="13" font-weight="700" fill="var(--_text)">ShapFeature</text>
+<line x1="313.79999999999995" y1="488" x2="455.19999999999993" y2="488" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<text x="321.79999999999995" y="502" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">feature</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">str</tspan></text>
+<text x="321.79999999999995" y="522" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">value</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">float</tspan></text>
+<text x="321.79999999999995" y="542" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">shap_value</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">float</tspan></text>
+<text x="321.79999999999995" y="562" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">direction</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">str</tspan></text>
+<line x1="313.79999999999995" y1="576" x2="455.19999999999993" y2="576" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="280.79999999999995" y="248" width="207.4" height="148" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+<rect x="280.79999999999995" y="248" width="207.4" height="32" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+<text x="384.49999999999994" y="264" text-anchor="middle" dy="0.35em" font-size="13" font-weight="700" fill="var(--_text)">ModelResult</text>
+<line x1="280.79999999999995" y1="280" x2="488.19999999999993" y2="280" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<text x="288.79999999999995" y="294" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">model_key</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">str</tspan></text>
+<text x="288.79999999999995" y="314" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">model_name</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">str</tspan></text>
+<text x="288.79999999999995" y="334" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">probability</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">float</tspan></text>
+<text x="288.79999999999995" y="354" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">risk_level</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">str</tspan></text>
+<text x="288.79999999999995" y="374" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">shap_top</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">list~ShapFeature~</tspan></text>
+<line x1="280.79999999999995" y1="388" x2="488.19999999999993" y2="388" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="280.79999999999995" y="40" width="207.4" height="148" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+<rect x="280.79999999999995" y="40" width="207.4" height="32" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+<text x="384.49999999999994" y="56" text-anchor="middle" dy="0.35em" font-size="13" font-weight="700" fill="var(--_text)">PredictResponse</text>
+<line x1="280.79999999999995" y1="72" x2="488.19999999999993" y2="72" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<text x="288.79999999999995" y="86" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">disease</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">str</tspan></text>
+<text x="288.79999999999995" y="106" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">models</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">list~ModelResult~</tspan></text>
+<text x="288.79999999999995" y="126" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">ensemble_probability</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">float</tspan></text>
+<text x="288.79999999999995" y="146" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">ensemble_risk_level</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">str</tspan></text>
+<text x="288.79999999999995" y="166" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">prediction_id</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">str</tspan></text>
+<line x1="280.79999999999995" y1="180" x2="488.19999999999993" y2="180" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<rect x="528.1999999999998" y="40" width="207.4" height="148" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+<rect x="528.1999999999998" y="40" width="207.4" height="32" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+<text x="631.8999999999999" y="56" text-anchor="middle" dy="0.35em" font-size="13" font-weight="700" fill="var(--_text)">HistoryItem</text>
+<line x1="528.1999999999998" y1="72" x2="735.5999999999998" y2="72" stroke="var(--_node-stroke)" stroke-width="0.75" />
+<text x="536.1999999999998" y="86" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">id</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">str</tspan></text>
+<text x="536.1999999999998" y="106" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">disease</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">str</tspan></text>
+<text x="536.1999999999998" y="126" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">ensemble_probability</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">float</tspan></text>
+<text x="536.1999999999998" y="146" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">ensemble_risk_level</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">str</tspan></text>
+<text x="536.1999999999998" y="166" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">created_at</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">str</tspan></text>
+<line x1="528.1999999999998" y1="180" x2="735.5999999999998" y2="180" stroke="var(--_node-stroke)" stroke-width="0.75" />
+
+
+</svg>

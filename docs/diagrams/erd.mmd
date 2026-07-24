@@ -1,0 +1,29 @@
+erDiagram
+    USERS ||--o{ PREDICTIONS : "makes"
+    USERS {
+        ObjectId _id PK
+        string email UK
+        string auth_provider "google or local"
+        string role "user, admin"
+        boolean consentDataStorage
+        datetime created_at
+    }
+    
+    PREDICTIONS {
+        ObjectId _id PK
+        string user_id FK "References USERS._id"
+        string disease "diabetes, heart, tb, cancer"
+        json features "Input features"
+        json models "Array of model results (LR, RF, XGB)"
+        float ensemble_probability
+        string ensemble_risk_level
+        datetime created_at
+    }
+
+    MODEL_METADATA {
+        ObjectId _id PK
+        string disease "e.g., diabetes"
+        json models "Model metrics (accuracy, precision)"
+        array features "List of expected features"
+        datetime trained_at
+    }

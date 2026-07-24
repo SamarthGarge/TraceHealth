@@ -50,6 +50,7 @@ export default function App() {
         <Route path="/insights"        element={<Insights />} />
 
         {/* Guest + Auth — predictions and symptom check work for everyone */}
+        <Route path="/predict"           element={<Predict />} />
         <Route path="/predict/:disease"  element={<Predict />} />
         <Route path="/symptom-check"     element={<SymptomCheck />} />
 
