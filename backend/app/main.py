@@ -125,4 +125,7 @@ app.include_router(history.router, prefix="/api", tags=["History"])
 app.include_router(uploads.router, prefix="/api", tags=["Uploads"])
 # app.include_router(export.router, prefix="/api", tags=["Export"])
 # app.include_router(admin.router, prefix="/api", tags=["Admin"])
-# app.include_router(symptom_check.router, prefix="/api", tags=["Symptom Check"])
+
+# Phase 7 -- Symptom Check
+from app.routers import symptom_check
+app.include_router(symptom_check.router, prefix="/api", tags=["Symptom Check"])
