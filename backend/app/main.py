@@ -128,6 +128,10 @@ from app.routers import export
 app.include_router(export.router, prefix="/api", tags=["Export"])
 # app.include_router(admin.router, prefix="/api", tags=["Admin"])
 
+# Phase 10 -- Admin
+from app.routers import admin
+app.include_router(admin.router, prefix="/api", tags=["Admin"])
+
 # Phase 7 -- Symptom Check
 from app.routers import symptom_check
 app.include_router(symptom_check.router, prefix="/api", tags=["Symptom Check"])
