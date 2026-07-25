@@ -123,7 +123,9 @@ app.include_router(history.router, prefix="/api", tags=["History"])
 
 # Phase 5 -- File Uploads
 app.include_router(uploads.router, prefix="/api", tags=["Uploads"])
-# app.include_router(export.router, prefix="/api", tags=["Export"])
+# Phase 9 -- Export
+from app.routers import export
+app.include_router(export.router, prefix="/api", tags=["Export"])
 # app.include_router(admin.router, prefix="/api", tags=["Admin"])
 
 # Phase 7 -- Symptom Check
