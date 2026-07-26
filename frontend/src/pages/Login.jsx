@@ -174,6 +174,13 @@ export default function Login() {
               {isLoading ? <span className="spinner" style={{ width: 16, height: 16 }} /> : "Sign in"}
             </button>
           </form>
+
+          <p className="text-center text-xs text-ink-ghost mt-6">
+            Authorized personnel only?{" "}
+            <Link to="/admin/login" className="text-terra hover:underline">
+              Admin sign in
+            </Link>
+          </p>
         </div>
       </div>
     </div>

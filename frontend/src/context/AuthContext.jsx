@@ -1,35 +1,36 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { getMe, logout as apiLogout } from "../api/auth";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { getMe } from "../api/auth";
+import { useAuthStore } from "../store/authStore";
 
 /**
- * AuthContext — manages the current user state using a simple useState.
- * No Better Auth SDK. No localStorage. No token in JS memory.
- *
- * The JWT lives exclusively in an httpOnly cookie (set by FastAPI).
- * On app load we call GET /api/auth/me to find out if the cookie is still valid.
- * On logout we call POST /api/auth/logout to clear the cookie server-side.
+ * AuthContext — now uses Zustand + localStorage for persistent state.
+ * The JWT still lives exclusively in an httpOnly cookie (set by FastAPI).
+ * On app load, we instantly restore the user from localStorage (via Zustand),
+ * preventing the loading screen flicker. We then call GET /api/auth/me in the background
+ * to ensure the session is still valid.
  */
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser]       = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // true until /me check completes
+  const { user, setUser, logout } = useAuthStore();
+  
+  // If we already have a user in Zustand (via localStorage persist), we don't need to block the UI.
+  const [isLoading, setIsLoading] = useState(!user);
 
-  // On mount — check if we already have a valid session (cookie may be present)
   useEffect(() => {
+    // Verify the httpOnly cookie session in the background
     getMe()
-      .then((data) => setUser(data))
-      .finally(() => setIsLoading(false));
-  }, []);
-
-  const logout = useCallback(async () => {
-    await apiLogout();
-    setUser(null);
-  }, []);
+      .then((data) => {
+        setUser(data);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [setUser]);
 
   const value = {
     user,
-    setUser,                        // used by Login/Signup pages after successful auth
+    setUser,
     isLoading,
     isAuthenticated: !!user,
     isAdmin: user?.role === "admin",
