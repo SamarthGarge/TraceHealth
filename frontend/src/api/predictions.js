@@ -63,3 +63,21 @@ export async function deleteHistoryItem(id) {
   const res = await apiClient.delete(`/api/history/${id}`);
   return res.data;
 }
+
+// ── Image Prediction ──────────────────────────────────────────────────────────
+
+/**
+ * Run image-based prediction (TB or cancer) by uploading a JPEG/PNG file.
+ * Works for guests; prediction is only persisted for authenticated + consented users.
+ * @param {string} disease - "tb" | "cancer"
+ * @param {File}   imageFile - JPEG or PNG file object
+ * @returns {Promise<ImagePredictResponse>}
+ */
+export async function predictFromImage(disease, imageFile) {
+  const fd = new FormData();
+  fd.append("image", imageFile);
+  const res = await apiClient.post(`/api/predict/${disease}/image`, fd, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+}

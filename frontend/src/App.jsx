@@ -3,11 +3,12 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import AuthGuard from "./components/layout/AuthGuard";
 
 // Eager-loaded pages (auth, landing — small, always needed)
-import Landing from "./pages/Landing";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
+import Landing     from "./pages/Landing";
+import Login       from "./pages/Login";
+import Signup      from "./pages/Signup";
+import AdminLogin  from "./pages/AdminLogin";
 import OAuthCallback from "./pages/OAuthCallback";
-import NotFound from "./pages/NotFound";
+import NotFound    from "./pages/NotFound";
 
 // Lazy-loaded pages (code-split by route for performance)
 const Dashboard     = lazy(() => import("./pages/Dashboard"));
@@ -46,6 +47,7 @@ export default function App() {
         <Route path="/"                element={<Landing />} />
         <Route path="/login"           element={<Login />} />
         <Route path="/signup"          element={<Signup />} />
+        <Route path="/admin/login"     element={<AdminLogin />} />
         <Route path="/auth/callback"   element={<OAuthCallback />} />
         <Route path="/insights"        element={<Insights />} />
 

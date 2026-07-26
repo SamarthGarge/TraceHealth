@@ -10,6 +10,8 @@ Endpoints:
   POST /api/auth/refresh         — issues a new access token from refresh cookie
   GET  /api/auth/google          — starts Google OAuth redirect
   GET  /api/auth/google/callback — Google OAuth callback, sets cookies
+  POST /api/auth/admin/login     — admin-only login (403 for non-admin users)
+  POST /api/auth/admin/setup     — one-time admin account creation from env vars
 """
 import secrets
 from datetime import datetime, timezone
@@ -181,7 +183,14 @@ async def refresh_token(request: Request, response: Response):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token expired.")
 
     db = get_db()
-    user = await db.users.find_one({"_id": payload["sub"]})
+    # payload["sub"] is a string — must convert to ObjectId for MongoDB _id lookup
+    try:
+        from bson import ObjectId
+        user = await db.users.find_one({"_id": ObjectId(payload["sub"])})
+    except Exception:
+        _clear_auth_cookies(response)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token subject.")
+
     if not user:
         _clear_auth_cookies(response)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found.")
@@ -290,3 +299,75 @@ async def google_callback(code: str):
     logger.info("Google OAuth success: %s", guser["email"])
     return redirect
 
+
+# ── Admin Auth ────────────────────────────────────────────────────────────────
+
+@router.post("/auth/admin/login", response_model=TokenResponse)
+async def admin_login(body: LoginRequest, response: Response):
+    """
+    Admin-only login endpoint.
+    Identical to regular login but raises 403 if the user's role is not 'admin'.
+    Returns 401 for wrong credentials (same generic message as regular login).
+    """
+    from bson import ObjectId
+    db = get_db()
+    user = await db.users.find_one({"email": body.email})
+
+    # Use a real bcrypt hash for the dummy comparison so passlib doesn't raise
+    # a ChecksumSizeError on a malformed placeholder string.
+    # hash_password is idempotent — compute once and reuse.
+    if not hasattr(admin_login, "_dummy_hash"):
+        admin_login._dummy_hash = hash_password("__tracehealth_admin_dummy__")
+    stored_hash = user["password_hash"] if user else admin_login._dummy_hash
+
+    if not verify_password(body.password, stored_hash) or not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password.",
+        )
+
+    if user.get("role") != "admin":
+        # 403 (not 401) — credentials valid but role wrong.
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. Admin credentials required.",
+        )
+
+    _set_auth_cookies(response, user)
+    logger.info("Admin login: %s", body.email)
+    return TokenResponse(user=_user_to_out(user))
+
+
+@router.post("/auth/admin/setup", status_code=status.HTTP_201_CREATED)
+async def admin_setup():
+    """
+    One-time admin account creation from environment variables.
+    Reads ADMIN_EMAIL and ADMIN_PASSWORD from settings.
+    Idempotent — does nothing if an admin already exists.
+    Not user-facing: credentials come from env only, never from request body.
+    """
+    if not settings.ADMIN_EMAIL or not settings.ADMIN_PASSWORD:
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="ADMIN_EMAIL and ADMIN_PASSWORD must be set in environment variables.",
+        )
+
+    db = get_db()
+    existing = await db.users.find_one({"role": "admin"})
+    if existing:
+        return {"message": "Admin account already exists.", "email": existing["email"]}
+
+    now = datetime.now(timezone.utc)
+    doc = {
+        "name":               "Admin",
+        "email":              settings.ADMIN_EMAIL,
+        "password_hash":      hash_password(settings.ADMIN_PASSWORD),
+        "role":               "admin",
+        "consentDataStorage": True,
+        "provider":           "email",
+        "createdAt":          now,
+        "updatedAt":          now,
+    }
+    await db.users.insert_one(doc)
+    logger.info("Admin account created: %s", settings.ADMIN_EMAIL)
+    return {"message": "Admin account created successfully.", "email": settings.ADMIN_EMAIL}

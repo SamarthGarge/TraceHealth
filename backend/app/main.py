@@ -5,6 +5,14 @@ See docs/Backend.md §2 for the full application structure.
 """
 from contextlib import asynccontextmanager
 
+# ── WINDOWS DLL FIX: Import torch before any other heavy libraries ────────────
+# Prevents WinError 1114 (DLL initialization failed) when Uvicorn spawns workers
+try:
+    import torch
+except ImportError:
+    pass
+# ──────────────────────────────────────────────────────────────────────────────
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -15,21 +23,19 @@ from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.utils.logging import setup_logging
 from slowapi.errors import RateLimitExceeded
 
-# Routers — imported here; implemented progressively per phase
-from app.routers import models_info
-from app.routers import auth      # signup, login, logout, /me, Google OAuth
-from app.routers import users     # profile update, account deletion
-
-# Phase 3 -- Predictions & History
-from app.routers import predict, history
-# Phase 5 -- File Uploads
-from app.routers import uploads
-# Phase 9+
-# from app.routers import export
-# Phase 10+
-# from app.routers import admin
-# Phase 7+
-# from app.routers import symptom_check
+# Routers
+from app.routers import (
+    models_info,
+    auth,           # signup, login, logout, /me, Google OAuth
+    users,          # profile update, account deletion
+    predict,        # Phase 3
+    history,        # Phase 3
+    uploads,        # Phase 5
+    symptom_check,  # Phase 7
+    export,         # Phase 9
+    admin,          # Phase 10
+    predict_image,  # Phase 11
+)
 
 
 setup_logging()
@@ -124,14 +130,13 @@ app.include_router(history.router, prefix="/api", tags=["History"])
 # Phase 5 -- File Uploads
 app.include_router(uploads.router, prefix="/api", tags=["Uploads"])
 # Phase 9 -- Export
-from app.routers import export
 app.include_router(export.router, prefix="/api", tags=["Export"])
-# app.include_router(admin.router, prefix="/api", tags=["Admin"])
 
 # Phase 10 -- Admin
-from app.routers import admin
 app.include_router(admin.router, prefix="/api", tags=["Admin"])
 
+# Phase 11 -- Image Prediction (TB X-ray + Cancer CT)
+app.include_router(predict_image.router, prefix="/api", tags=["Image Prediction"])
+
 # Phase 7 -- Symptom Check
-from app.routers import symptom_check
 app.include_router(symptom_check.router, prefix="/api", tags=["Symptom Check"])

@@ -5,7 +5,12 @@ import FeatureInput from "../components/predict/FeatureInput";
 import ModelResultCard from "../components/predict/ModelResultCard";
 import EnsembleBadge from "../components/predict/EnsembleBadge";
 import DiseaseCard from "../components/predict/DiseaseCard";
+import ImageUploadForm from "../components/predict/ImageUploadForm";
+import GradCamOverlay from "../components/predict/GradCamOverlay";
 import { getFeatures, runPrediction } from "../api/predictions";
+
+// Diseases that support image-based prediction
+const IMAGE_DISEASES = ["tb", "cancer"];
 
 const DISEASES = ["diabetes", "heart", "tb", "cancer"];
 
@@ -21,13 +26,18 @@ export default function Predict() {
   const navigate = useNavigate();
 
   // ── State ──────────────────────────────────────────────────────────────────
-  const [features, setFeatures]   = useState([]);           // expected feature names
-  const [values, setValues]       = useState({});            // user input values
-  const [errors, setErrors]       = useState({});            // validation errors
-  const [loading, setLoading]     = useState(false);         // features loading
-  const [submitting, setSubmitting] = useState(false);       // prediction running
-  const [result, setResult]       = useState(null);          // PredictResponse
-  const [apiError, setApiError]   = useState("");
+  const [features, setFeatures]     = useState([]);
+  const [values,   setValues]       = useState({});
+  const [errors,   setErrors]       = useState({});
+  const [loading,  setLoading]      = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [result,   setResult]       = useState(null);
+  const [apiError, setApiError]     = useState("");
+
+  // Image prediction tab state
+  const supportsImage = IMAGE_DISEASES.includes(disease);
+  const [inputTab,    setInputTab]    = useState("tabular"); // "tabular" | "image"
+  const [imageResult, setImageResult] = useState(null);
 
   // ── Load features when disease param changes ───────────────────────────────
   useEffect(() => {
@@ -151,7 +161,7 @@ export default function Predict() {
         </div>
 
         <div className="max-w-5xl">
-          <header className="mb-8">
+          <header className="mb-6">
             <p className="text-xs font-mono tracking-widest text-ink-ghost uppercase mb-2">
               Risk Screening
             </p>
@@ -159,13 +169,36 @@ export default function Predict() {
               {DISEASE_LABELS[disease]} Prediction
             </h1>
             <p className="text-ink-light text-sm">
-              Enter patient values below. All three models will run simultaneously
-              and results will be compared with SHAP explanations.
+              {supportsImage
+                ? "Enter patient values or upload a medical image for AI-based screening."
+                : "Enter patient values below. All three models will run simultaneously and results will be compared with SHAP explanations."}
             </p>
           </header>
 
+          {/* ── Tab switcher (only for image-supported diseases) ── */}
+          {supportsImage && (
+            <div className="flex gap-1 bg-parchment border border-border rounded-xl p-1 mb-6 w-fit">
+              {[
+                { key: "tabular", label: "Clinical Data" },
+                { key: "image",   label: "Upload Image" },
+              ].map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => { setInputTab(key); setImageResult(null); }}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    inputTab === key
+                      ? "bg-white text-terra shadow-sm border border-border"
+                      : "text-ink-ghost hover:text-ink"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Loading features */}
-          {loading && (
+          {loading && inputTab === "tabular" && (
             <div className="flex items-center gap-3 text-ink-light text-sm">
               <div className="w-4 h-4 border-2 border-terra border-t-transparent rounded-full animate-spin" />
               Loading feature list…
@@ -179,8 +212,24 @@ export default function Predict() {
             </div>
           )}
 
-          {/* Feature Form */}
-          {!loading && features.length > 0 && (
+          {/* ── Image tab content ── */}
+          {inputTab === "image" && supportsImage && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <div className="bg-white border border-border rounded-2xl p-6">
+                <h2 className="text-sm font-semibold text-ink mb-5">Image Upload</h2>
+                <ImageUploadForm disease={disease} onResult={setImageResult} />
+              </div>
+              {imageResult && (
+                <div className="bg-white border border-border rounded-2xl p-6">
+                  <h2 className="text-sm font-semibold text-ink mb-5">Prediction Result</h2>
+                  <GradCamOverlay result={imageResult} disease={disease} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Feature Form (tabular tab only) */}
+          {inputTab === "tabular" && !loading && features.length > 0 && (
             <form onSubmit={handleSubmit} noValidate>
               <div className="bg-white border border-border rounded-xl p-6 mb-6">
                 <h2 className="text-sm font-semibold text-ink mb-5">Patient Data</h2>

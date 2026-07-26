@@ -1,6 +1,25 @@
 import React, { useState } from "react";
 import Sidebar from "../components/layout/Sidebar";
 import { exportAllPredictions } from "../api/export";
+import apiClient from "../api/client";
+
+// helper for PDF (different endpoint)
+async function exportPdf(disease) {
+  const params = {};
+  if (disease) params.disease = disease;
+  const res = await apiClient.get("/api/export/predictions/pdf", {
+    params,
+    responseType: "blob",
+  });
+  const cd = res.headers["content-disposition"] ?? "";
+  const match = cd.match(/filename="?([^"]+)"?/);
+  const filename = match?.[1] ?? "tracehealth_report.pdf";
+  const url = URL.createObjectURL(res.data);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -33,6 +52,16 @@ const FORMAT_OPTIONS = [
       </svg>
     ),
   },
+  {
+    value: "pdf",
+    label: "PDF Report",
+    description: "Detailed report with cover page, disease sections, SHAP highlights, and methodology. Shareable with a doctor.",
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+      </svg>
+    ),
+  },
 ];
 
 // ── Main Component ────────────────────────────────────────────────────────────
@@ -49,8 +78,13 @@ export default function Export() {
     setError("");
     setSuccess("");
     try {
-      await exportAllPredictions({ format, disease: disease || undefined });
-      setSuccess(`Downloaded predictions as ${format.toUpperCase()}.`);
+      if (format === "pdf") {
+        await exportPdf(disease || undefined);
+        setSuccess("Downloaded PDF report.");
+      } else {
+        await exportAllPredictions({ format, disease: disease || undefined });
+        setSuccess(`Downloaded predictions as ${format.toUpperCase()}.`);
+      }
       setTimeout(() => setSuccess(""), 4000);
     } catch (err) {
       const msg = err?.response?.data?.detail ?? "Export failed. Please try again.";

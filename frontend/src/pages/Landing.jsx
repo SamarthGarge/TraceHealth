@@ -1124,9 +1124,17 @@ export default function LandingPage() {
           <p className="font-mono text-[11px] text-center text-ink-light">
             Educational tool only — not a medical diagnosis.
           </p>
-          <p className="font-mono text-[11px] text-ink-ghost">
-            © {new Date().getFullYear()} TraceHealth
-          </p>
+          <div className="flex items-center gap-4">
+            <p className="font-mono text-[11px] text-ink-ghost">
+              © {new Date().getFullYear()} TraceHealth
+            </p>
+            <Link
+              to="/admin/login"
+              className="font-mono text-[11px] text-ink-ghost hover:text-terra transition-colors"
+            >
+              Admin
+            </Link>
+          </div>
         </div>
       </footer>
     </div>

@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60        # 1 hour
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30          # 30-day sliding refresh
 
+    # --- Admin account (seeded via POST /api/auth/admin/setup) ---
+    ADMIN_EMAIL: str = ""
+    ADMIN_PASSWORD: str = ""
+
     # --- Google OAuth ---
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
@@ -32,7 +36,7 @@ class Settings(BaseSettings):
     EXTRA_ALLOWED_ORIGINS: str = ""
 
     # --- Models ---
-    MODELS_DIR: str = "../../models"   # relative to backend root
+    MODELS_DIR: str = "../models"   # relative to backend root
 
     model_config = SettingsConfigDict(
         env_file=".env",

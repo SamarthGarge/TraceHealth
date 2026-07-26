@@ -23,6 +23,7 @@ from fastapi.responses import StreamingResponse
 
 from app.db import get_db
 from app.security.dependencies import require_auth
+from app.utils.pdf_report import build_prediction_report
 
 router = APIRouter()
 
@@ -131,6 +132,55 @@ async def export_all_predictions(
     return StreamingResponse(
         io.BytesIO(content.encode("utf-8")),
         media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/export/predictions/pdf")
+async def export_pdf_report(
+    disease: str = Query(None, description="Filter by disease (optional)"),
+    current_user: dict = Depends(require_auth),
+):
+    """
+    Generate and stream a detailed PDF report of the user's prediction history.
+    Includes cover page, per-disease tables, SHAP highlights, and methodology note.
+
+    NOTE: This route MUST be declared before /export/predictions/{prediction_id}
+    so FastAPI does not match the literal string 'pdf' as a path parameter.
+    """
+    db = get_db()
+
+    query: dict = {"user_id": current_user["sub"]}
+    if disease:
+        query["disease"] = disease.lower()
+
+    cursor = db.predictions.find(query).sort("created_at", -1)
+    docs = await cursor.to_list(length=5_000)
+
+    # Fetch user details for the cover page
+    try:
+        from bson import ObjectId
+        user_doc = await db.users.find_one(
+            {"_id": ObjectId(current_user["sub"])},
+            {"name": 1, "email": 1},
+        )
+    except Exception:
+        user_doc = {}
+
+    pdf_bytes = build_prediction_report(
+        predictions=docs,
+        user_name=user_doc.get("name", current_user.get("name", "")),
+        user_email=user_doc.get("email", current_user.get("email", "")),
+        disease_filter=disease or None,
+    )
+
+    timestamp = _timestamp()
+    disease_tag = f"_{disease}" if disease else ""
+    filename = f"tracehealth_report{disease_tag}_{timestamp}.pdf"
+
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
