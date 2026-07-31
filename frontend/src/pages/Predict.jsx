@@ -47,9 +47,12 @@ export default function Predict() {
       return;
     }
 
+    // Reset ALL prediction state when disease changes
     setResult(null);
     setApiError("");
     setErrors({});
+    setImageResult(null);   // ← clear previous image prediction result
+    setInputTab("tabular"); // ← reset to tabular tab so stale image result is not shown
     setLoading(true);
 
     getFeatures(disease)
@@ -61,6 +64,7 @@ export default function Predict() {
       .catch(() => setApiError("Failed to load feature list. Is the backend running?"))
       .finally(() => setLoading(false));
   }, [disease, navigate]);
+
 
   // ── If no disease param → show disease selector ────────────────────────────
   if (!disease) {

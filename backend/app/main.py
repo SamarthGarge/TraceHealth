@@ -31,6 +31,7 @@ from app.routers import (
     predict,        # Phase 3
     history,        # Phase 3
     uploads,        # Phase 5
+    analyze,        # Phase 5 — AI report scan
     symptom_check,  # Phase 7
     export,         # Phase 9
     admin,          # Phase 10
@@ -129,6 +130,8 @@ app.include_router(history.router, prefix="/api", tags=["History"])
 
 # Phase 5 -- File Uploads
 app.include_router(uploads.router, prefix="/api", tags=["Uploads"])
+# Phase 5 -- AI Report Analysis
+app.include_router(analyze.router, prefix="/api", tags=["Uploads"])
 # Phase 9 -- Export
 app.include_router(export.router, prefix="/api", tags=["Export"])
 

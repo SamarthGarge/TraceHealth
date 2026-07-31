@@ -112,11 +112,11 @@ export default function Sidebar() {
     <aside className="hidden md:flex flex-col w-56 shrink-0 min-h-screen bg-ink px-3 py-5">
       {/* Brand */}
       <div className="flex items-center gap-2.5 px-3 mb-8">
-        <span className="w-6 h-6 rounded bg-terra flex items-center justify-center shrink-0">
-          <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 text-white" fill="currentColor">
-            <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 2a5 5 0 1 1 0 10A5 5 0 0 1 8 3zm-.5 2v3.5l2.8 1.6-.5.9L6.5 9V5h1z" />
-          </svg>
-        </span>
+        <img
+          src="/logo.svg"
+          alt="TraceHealth"
+          className="w-7 h-7 rounded-md object-contain shrink-0 border border-white/10"
+        />
         <span className="font-serif text-white text-lg leading-none">TraceHealth</span>
       </div>
 

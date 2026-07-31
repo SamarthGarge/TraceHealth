@@ -49,6 +49,126 @@ function formatBytes(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+// ── Risk Trend Chart ──────────────────────────────────────────────────────────
+
+function RiskTrendChart({ predictions }) {
+  // Need at least 2 points to draw a trend line
+  if (!predictions || predictions.length < 2) return null;
+
+  // Sort oldest→newest
+  const sorted = [...predictions]
+    .filter((p) => p.created_at)
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+  if (sorted.length < 2) return null;
+
+  const W = 540, H = 96, PAD = { t: 8, r: 12, b: 24, l: 36 };
+  const chartW = W - PAD.l - PAD.r;
+  const chartH = H - PAD.t - PAD.b;
+
+  // Group by disease for separate lines
+  const byDisease = {};
+  sorted.forEach((p) => {
+    if (!byDisease[p.disease]) byDisease[p.disease] = [];
+    byDisease[p.disease].push(p);
+  });
+
+  // Global min/max date for X axis (use all points)
+  const allTimes = sorted.map((p) => new Date(p.created_at).getTime());
+  const minT = Math.min(...allTimes);
+  const maxT = Math.max(...allTimes);
+  const rangeT = maxT - minT || 1;
+
+  function xOf(p)  { return PAD.l + ((new Date(p.created_at).getTime() - minT) / rangeT) * chartW; }
+  function yOf(p)  { return PAD.t + chartH - (p.ensemble_probability ?? 0) * chartH; }
+
+  // X-axis date labels (first & last)
+  function shortDate(iso) {
+    return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+  }
+
+  return (
+    <div className="bg-white border border-border rounded-xl p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <p className="text-xs font-mono tracking-widest text-ink-ghost uppercase mb-0.5">Trend</p>
+          <h2 className="text-sm font-semibold text-ink">Risk Score Over Time</h2>
+        </div>
+        <div className="flex items-center gap-3 flex-wrap justify-end">
+          {Object.keys(byDisease).map((d) => (
+            <span key={d} className="flex items-center gap-1.5 text-[10px] font-mono text-ink-ghost">
+              <span className="w-3 h-0.5 inline-block rounded" style={{ backgroundColor: DISEASE_META[d]?.dot ?? "var(--ink-ghost)" }} />
+              {DISEASE_META[d]?.label ?? d}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="w-full"
+        style={{ height: 96, overflow: "visible" }}
+        aria-label="Risk score trend chart"
+      >
+        {/* 0% and 100% guide lines */}
+        {[0, 0.5, 1].map((v) => {
+          const y = PAD.t + chartH - v * chartH;
+          return (
+            <g key={v}>
+              <line x1={PAD.l} x2={W - PAD.r} y1={y} y2={y}
+                stroke="var(--border-soft)" strokeWidth={1} strokeDasharray={v === 0 || v === 1 ? "none" : "4 3"} />
+              <text x={PAD.l - 4} y={y + 3.5} textAnchor="end"
+                style={{ fontSize: 9, fill: "var(--ink-ghost)", fontFamily: "JetBrains Mono, monospace" }}>
+                {Math.round(v * 100)}%
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Per-disease lines + dots */}
+        {Object.entries(byDisease).map(([disease, pts]) => {
+          const color = DISEASE_META[disease]?.dot ?? "var(--ink-ghost)";
+          if (pts.length < 2) {
+            // Single point — just a dot
+            return (
+              <circle key={disease}
+                cx={xOf(pts[0])} cy={yOf(pts[0])} r={4}
+                fill={color} stroke="white" strokeWidth={2}
+              />
+            );
+          }
+          const d = pts.map((p, i) =>
+            `${i === 0 ? "M" : "L"}${xOf(p).toFixed(1)},${yOf(p).toFixed(1)}`
+          ).join(" ");
+          return (
+            <g key={disease}>
+              <path d={d} fill="none" stroke={color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+              {pts.map((p, i) => (
+                <circle key={i}
+                  cx={xOf(p)} cy={yOf(p)} r={3.5}
+                  fill={color} stroke="white" strokeWidth={2}
+                >
+                  <title>{`${DISEASE_META[disease]?.label ?? disease}: ${Math.round((p.ensemble_probability ?? 0) * 100)}% — ${shortDate(p.created_at)}`}</title>
+                </circle>
+              ))}
+            </g>
+          );
+        })}
+
+        {/* X-axis date labels */}
+        <text x={PAD.l} y={H - 2} textAnchor="start"
+          style={{ fontSize: 9, fill: "var(--ink-ghost)", fontFamily: "JetBrains Mono, monospace" }}>
+          {shortDate(sorted[0].created_at)}
+        </text>
+        <text x={W - PAD.r} y={H - 2} textAnchor="end"
+          style={{ fontSize: 9, fill: "var(--ink-ghost)", fontFamily: "JetBrains Mono, monospace" }}>
+          {shortDate(sorted[sorted.length - 1].created_at)}
+        </text>
+      </svg>
+    </div>
+  );
+}
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function StatCard({ label, value, sub, accent }) {
@@ -187,6 +307,13 @@ export default function Dashboard() {
             accent="var(--terra)"
           />
         </div>
+
+        {/* Risk Trend Chart — only shown when there are at least 2 predictions */}
+        {!loading && recentPredictions.length >= 2 && (
+          <div className="mb-6">
+            <RiskTrendChart predictions={recentPredictions} />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 

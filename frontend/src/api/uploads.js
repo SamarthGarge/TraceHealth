@@ -70,3 +70,15 @@ export async function deleteUpload(fileId) {
   const res = await apiClient.delete(`/api/uploads/${fileId}`);
   return res.data;
 }
+
+/**
+ * Analyze an uploaded medical report (PDF or image) using OCR + AI.
+ * Returns detected health markers and personalised recommendations.
+ *
+ * @param {string} fileId - GridFS file ID
+ * @returns {Promise<AnalysisResult>}
+ */
+export async function analyzeUpload(fileId) {
+  const res = await apiClient.post(`/api/uploads/${fileId}/analyze`);
+  return res.data;
+}

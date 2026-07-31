@@ -15,12 +15,35 @@ jobs:
     defaults:
       run:
         working-directory: backend
+
+    # Provide minimal env vars so pydantic-settings doesn't fail on startup
+    env:
+      MONGO_URI: "mongodb://localhost:27017/test"
+      MONGO_DB_NAME: "test"
+      JWT_SECRET: "ci-test-secret-do-not-use-in-production"
+      JWT_ALGORITHM: "HS256"
+      FRONTEND_ORIGIN: "http://localhost:5173"
+      ENVIRONMENT: "development"
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install -r requirements.txt
-      - run: pip install pip-audit
-      - run: pip-audit || true   # non-blocking initially; tighten once baseline is clean
-      - run: pytest
+
+      # System dependency needed by pytesseract (OCR)
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y tesseract-ocr
+
+      # Use the CI-safe requirements (no torch/weasyprint/grad-cam)
+      - name: Install Python dependencies
+        run: pip install --no-cache-dir -r requirements-ci.txt
+
+      - name: Security audit (non-blocking)
+        run: pip install pip-audit && pip-audit || true
+
+      - name: Run tests
+        run: pytest tests/ -v --tb=short -x

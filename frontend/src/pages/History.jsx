@@ -30,18 +30,267 @@ const DISEASE_DOT = {
 };
 
 const PAGE_SIZE = 20;
+const MAX_COMPARE = 3;
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function formatDate(iso) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("en-IN", {
+    day: "numeric", month: "short", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
+}
+
+// ── Compare Panel ─────────────────────────────────────────────────────────────
+
+function ComparePanel({ items, onClose }) {
+  const MODEL_LABELS = { lr: "Logistic Reg.", rf: "Random Forest", xgb: "XGBoost" };
+
+  // Collect every model key present across items
+  const allModelKeys = [...new Set(
+    items.flatMap((it) => Object.keys(it.predictions ?? {}))
+  )].sort();
+
+  // Collect top-3 SHAP features per item (if present)
+  function topShap(item) {
+    const shap = item.shap_values;
+    if (!shap || typeof shap !== "object") return [];
+    return Object.entries(shap)
+      .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+      .slice(0, 3);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/30 backdrop-blur-sm">
+      <div className="bg-parchment rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-border">
+        {/* Header */}
+        <div className="sticky top-0 bg-parchment border-b border-border px-6 py-4 flex items-center justify-between rounded-t-2xl">
+          <div>
+            <p className="text-xs font-mono tracking-widest text-ink-ghost uppercase mb-0.5">Analysis</p>
+            <h2 className="font-serif text-xl text-ink">Compare Runs</h2>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg text-ink-ghost hover:text-ink hover:bg-border-soft transition-colors">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+
+          {/* Overview table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-2 pr-4 text-xs font-mono text-ink-ghost uppercase tracking-wider font-normal">Metric</th>
+                  {items.map((it, i) => (
+                    <th key={it.id} className="text-left py-2 px-3 min-w-[140px]">
+                      <span
+                        className="w-2 h-2 rounded-full inline-block mr-1.5 align-middle"
+                        style={{ backgroundColor: DISEASE_DOT[it.disease] ?? "var(--ink-ghost)" }}
+                      />
+                      <span className="text-xs font-semibold text-ink">
+                        {DISEASE_LABELS[it.disease] ?? it.disease}
+                      </span>
+                      <br />
+                      <span className="text-[10px] text-ink-ghost font-mono font-normal">
+                        {new Date(it.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                      </span>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {/* Ensemble risk */}
+                <tr>
+                  <td className="py-2.5 pr-4 text-xs text-ink-ghost font-mono uppercase tracking-wide">Risk Level</td>
+                  {items.map((it) => {
+                    const col = RISK_COLOR[it.ensemble_risk_level] ?? RISK_COLOR.Moderate;
+                    const bg  = RISK_BG[it.ensemble_risk_level]    ?? RISK_BG.Moderate;
+                    return (
+                      <td key={it.id} className="py-2.5 px-3">
+                        <span
+                          className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
+                          style={{ color: col, backgroundColor: bg }}
+                        >
+                          {it.ensemble_risk_level ?? "—"}
+                        </span>
+                      </td>
+                    );
+                  })}
+                </tr>
+
+                {/* Ensemble probability */}
+                <tr>
+                  <td className="py-2.5 pr-4 text-xs text-ink-ghost font-mono uppercase tracking-wide">Probability</td>
+                  {items.map((it) => {
+                    const pct = Math.round((it.ensemble_probability ?? 0) * 100);
+                    const col = RISK_COLOR[it.ensemble_risk_level] ?? RISK_COLOR.Moderate;
+                    return (
+                      <td key={it.id} className="py-2.5 px-3">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-semibold text-sm" style={{ color: col }}>{pct}%</span>
+                          <div className="flex-1 h-1.5 bg-border rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all"
+                              style={{ width: `${pct}%`, backgroundColor: col }}
+                            />
+                          </div>
+                        </div>
+                      </td>
+                    );
+                  })}
+                </tr>
+
+                {/* Per-model probabilities */}
+                {allModelKeys.map((mKey) => (
+                  <tr key={mKey}>
+                    <td className="py-2.5 pr-4 text-xs text-ink-ghost font-mono uppercase tracking-wide">
+                      {MODEL_LABELS[mKey] ?? mKey}
+                    </td>
+                    {items.map((it) => {
+                      const pred = it.predictions?.[mKey];
+                      if (!pred) return <td key={it.id} className="py-2.5 px-3 text-xs text-ink-ghost">—</td>;
+                      const pct = Math.round((pred.probability ?? 0) * 100);
+                      return (
+                        <td key={it.id} className="py-2.5 px-3">
+                          <span className="text-sm font-mono text-ink-mid">{pct}%</span>
+                          <span
+                            className="ml-1.5 px-1.5 py-0.5 rounded text-[9px] font-semibold"
+                            style={{
+                              color: RISK_COLOR[pred.risk_level] ?? RISK_COLOR.Moderate,
+                              backgroundColor: RISK_BG[pred.risk_level] ?? RISK_BG.Moderate,
+                            }}
+                          >
+                            {pred.risk_level}
+                          </span>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Visual probability comparison bars */}
+          <div>
+            <p className="text-xs font-mono tracking-widest text-ink-ghost uppercase mb-3">
+              Ensemble Probability — Side by Side
+            </p>
+            <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)` }}>
+              {items.map((it) => {
+                const pct = Math.round((it.ensemble_probability ?? 0) * 100);
+                const col = RISK_COLOR[it.ensemble_risk_level] ?? RISK_COLOR.Moderate;
+                const bg  = RISK_BG[it.ensemble_risk_level]    ?? RISK_BG.Moderate;
+                return (
+                  <div key={it.id} className="bg-white border border-border rounded-xl p-4 text-center">
+                    <p className="text-xs font-semibold text-ink mb-1">
+                      {DISEASE_LABELS[it.disease] ?? it.disease}
+                    </p>
+                    {/* Vertical bar */}
+                    <div className="flex justify-center mb-2">
+                      <div className="w-12 rounded-t-lg overflow-hidden" style={{ height: 80, backgroundColor: "var(--parchment-lo)" }}>
+                        <div
+                          className="w-full rounded-t-lg transition-all"
+                          style={{
+                            height: `${pct}%`,
+                            backgroundColor: col,
+                            marginTop: `${100 - pct}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <span className="font-mono text-xl font-bold" style={{ color: col }}>{pct}%</span>
+                    <br />
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ color: col, backgroundColor: bg }}>
+                      {it.ensemble_risk_level}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Top SHAP features per run (if available) */}
+          {items.some((it) => it.shap_values && Object.keys(it.shap_values).length > 0) && (
+            <div>
+              <p className="text-xs font-mono tracking-widest text-ink-ghost uppercase mb-3">
+                Top Contributing Factors (SHAP)
+              </p>
+              <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)` }}>
+                {items.map((it) => {
+                  const shapts = topShap(it);
+                  return (
+                    <div key={it.id} className="bg-white border border-border rounded-xl p-4">
+                      <p className="text-xs font-semibold text-ink mb-2">
+                        {DISEASE_LABELS[it.disease] ?? it.disease}
+                      </p>
+                      {shapts.length === 0 ? (
+                        <p className="text-xs text-ink-ghost">Not available</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {shapts.map(([feat, val]) => {
+                            const isPos = val >= 0;
+                            const barW  = Math.min(Math.abs(val) * 100, 100);
+                            return (
+                              <div key={feat}>
+                                <div className="flex justify-between items-center mb-0.5">
+                                  <span className="text-[10px] text-ink-mid truncate max-w-[70%]">{feat}</span>
+                                  <span
+                                    className="text-[10px] font-mono"
+                                    style={{ color: isPos ? "var(--status-high)" : "var(--status-low)" }}
+                                  >
+                                    {isPos ? "+" : ""}{val.toFixed(3)}
+                                  </span>
+                                </div>
+                                <div className="w-full h-1 bg-border rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full rounded-full"
+                                    style={{
+                                      width: `${barW}%`,
+                                      backgroundColor: isPos ? "var(--status-high)" : "var(--status-low)",
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <p className="text-[11px] text-ink-ghost leading-relaxed border-t border-border pt-4">
+            ⚠ This comparison is for educational purposes only and does not constitute medical advice. Consult a qualified healthcare professional for medical guidance.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Component ────────────────────────────────────────────────────────────
 
 export default function History() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const diseaseFilter = searchParams.get("disease") || "";
-  const [items, setItems]       = useState([]);
-  const [total, setTotal]       = useState(0);
-  const [skip, setSkip]         = useState(0);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState("");
-  const [deleting, setDeleting] = useState(null); // id being deleted
+  const [items, setItems]           = useState([]);
+  const [total, setTotal]           = useState(0);
+  const [skip, setSkip]             = useState(0);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState("");
+  const [deleting, setDeleting]     = useState(null);
+  const [selected, setSelected]     = useState(new Set()); // ids for comparison
+  const [comparing, setComparing]   = useState(false);     // show compare panel
 
   const load = useCallback(async (skipVal = 0, disease = diseaseFilter) => {
     setLoading(true);
@@ -60,6 +309,9 @@ export default function History() {
 
   useEffect(() => { load(0, diseaseFilter); }, [diseaseFilter]);
 
+  // Reset selection when filter changes
+  useEffect(() => { setSelected(new Set()); }, [diseaseFilter]);
+
   async function handleDelete(id) {
     if (!window.confirm("Delete this prediction? This cannot be undone.")) return;
     setDeleting(id);
@@ -67,6 +319,7 @@ export default function History() {
       await deleteHistoryItem(id);
       setItems((prev) => prev.filter((i) => i.id !== id));
       setTotal((t) => t - 1);
+      setSelected((s) => { const ns = new Set(s); ns.delete(id); return ns; });
     } catch {
       setError("Failed to delete. Please try again.");
     } finally {
@@ -78,6 +331,19 @@ export default function History() {
     setSearchParams(d ? { disease: d } : {});
   }
 
+  function toggleSelect(id) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else if (next.size < MAX_COMPARE) {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  const selectedItems = items.filter((it) => selected.has(it.id));
   const hasPrev = skip > 0;
   const hasNext = skip + PAGE_SIZE < total;
 
@@ -97,7 +363,7 @@ export default function History() {
           </p>
         </header>
 
-        {/* Filter bar */}
+        {/* Filter bar + Compare CTA */}
         <div className="flex items-center gap-2 mb-6 flex-wrap">
           {["", "diabetes", "heart", "tb", "cancer"].map((d) => (
             <button
@@ -112,6 +378,32 @@ export default function History() {
               {d ? DISEASE_LABELS[d] : "All"}
             </button>
           ))}
+
+          {/* Compare button — appears once ≥2 items selected */}
+          {selected.size >= 2 && (
+            <button
+              onClick={() => setComparing(true)}
+              className="ml-auto flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold
+                bg-terra text-white hover:bg-terra-dark transition-all shadow-sm"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 0v10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+              </svg>
+              Compare {selected.size} runs
+            </button>
+          )}
+
+          {/* Selection hint */}
+          {items.length >= 2 && selected.size === 0 && (
+            <span className="ml-auto text-[10px] text-ink-ghost font-mono italic">
+              ☑ Select up to {MAX_COMPARE} runs to compare
+            </span>
+          )}
+          {selected.size === 1 && (
+            <span className="ml-auto text-[10px] text-ink-ghost font-mono italic">
+              Select {MAX_COMPARE - 1} more to compare
+            </span>
+          )}
         </div>
 
         {/* Error */}
@@ -138,9 +430,7 @@ export default function History() {
               </svg>
             </div>
             <p className="text-ink-mid font-medium mb-1">No predictions yet</p>
-            <p className="text-sm text-ink-ghost mb-4">
-              Run a screening to see your results here.
-            </p>
+            <p className="text-sm text-ink-ghost mb-4">Run a screening to see your results here.</p>
             <button
               onClick={() => navigate("/predict")}
               className="px-5 py-2.5 rounded-lg bg-terra text-white text-sm font-semibold hover:bg-terra-dark transition-colors"
@@ -159,17 +449,36 @@ export default function History() {
                 const riskBg    = RISK_BG[item.ensemble_risk_level]    ?? RISK_BG.Moderate;
                 const dot       = DISEASE_DOT[item.disease]             ?? "var(--ink-ghost)";
                 const pct       = Math.round((item.ensemble_probability ?? 0) * 100);
-                const date      = item.created_at
-                  ? new Date(item.created_at).toLocaleDateString("en-IN", {
-                      day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
-                    })
-                  : "—";
+                const date      = formatDate(item.created_at);
+                const isSelected = selected.has(item.id);
+                const isDisabled = !isSelected && selected.size >= MAX_COMPARE;
 
                 return (
                   <div
                     key={item.id}
-                    className="bg-white border border-border rounded-xl p-5 flex items-center gap-5 hover:border-border-strong transition-colors"
+                    className={`bg-white border rounded-xl p-5 flex items-center gap-5 transition-all
+                      ${isSelected ? "border-terra ring-1 ring-terra/20" : "border-border hover:border-border-strong"}`}
                   >
+                    {/* Checkbox for comparison */}
+                    <button
+                      onClick={() => toggleSelect(item.id)}
+                      disabled={isDisabled}
+                      title={isDisabled ? `Max ${MAX_COMPARE} runs selected` : isSelected ? "Deselect" : "Select for comparison"}
+                      className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all
+                        ${isSelected
+                          ? "bg-terra border-terra text-white"
+                          : isDisabled
+                            ? "border-border opacity-30 cursor-not-allowed"
+                            : "border-border hover:border-terra cursor-pointer"
+                        }`}
+                    >
+                      {isSelected && (
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
+
                     {/* Disease dot */}
                     <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: dot }} />
 
@@ -247,6 +556,14 @@ export default function History() {
           </>
         )}
       </main>
+
+      {/* Compare panel modal */}
+      {comparing && selectedItems.length >= 2 && (
+        <ComparePanel
+          items={selectedItems}
+          onClose={() => setComparing(false)}
+        />
+      )}
     </div>
   );
 }

@@ -354,7 +354,11 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2.5">
-            <Activity className="h-5 w-5 text-terra" />
+            <img
+              src="/logo.svg"
+              alt="TraceHealth logo"
+              className="h-8 w-8 rounded-lg object-contain"
+            />
             <span className="font-display text-xl font-semibold text-ink">
               TraceHealth
             </span>

@@ -1,23 +1,53 @@
 version: "3.9"
 
 services:
+  # ── FastAPI backend ──────────────────────────────────────────────────────────
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     env_file:
       - ./backend/.env
+    environment:
+      # Override MODELS_DIR to point to the container-internal path
+      MODELS_DIR: /app/models
     volumes:
-      - ./models:/app/models
+      # Mount the models directory from the host at runtime
+      - ./models:/app/models:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s   # give model loading time to complete
+    restart: unless-stopped
 
+  # ── React frontend (nginx) ───────────────────────────────────────────────────
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Pass the backend public URL as a build-time arg so Vite can embed it
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
     ports:
-      - "5173:5173"
-    env_file:
-      - ./frontend/.env
+      - "80:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
 
 # MongoDB is a managed Atlas cluster (see backend/.env → MONGO_URI).
-# A local mongo service can be added here for offline development if preferred.
+# A local mongo service can be added here for offline development:
+#
+#   mongo:
+#     image: mongo:7
+#     ports:
+#       - "27017:27017"
+#     volumes:
+#       - mongo_data:/data/db
+#
+# volumes:
+#   mongo_data:
