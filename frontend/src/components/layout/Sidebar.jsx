@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
@@ -81,20 +82,23 @@ const SECONDARY_NAV = [
   },
 ];
 
-function NavItem({ to, label, icon }) {
+function NavItem({ to, label, icon, collapsed }) {
   return (
     <NavLink
       to={to}
+      title={collapsed ? label : undefined}
       className={({ isActive }) =>
-        `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+        `flex items-center gap-3 py-2 rounded-lg text-sm transition-colors ${
+          collapsed ? "px-0 justify-center" : "px-3"
+        } ${
           isActive
             ? "bg-white/10 text-white font-medium"
             : "text-ink-ghost hover:text-white hover:bg-white/5"
         }`
       }
     >
-      {icon}
-      {label}
+      <div className="shrink-0 flex items-center justify-center w-5 h-5">{icon}</div>
+      {!collapsed && <span className="truncate">{label}</span>}
     </NavLink>
   );
 }
@@ -102,6 +106,18 @@ function NavItem({ to, label, icon }) {
 export default function Sidebar() {
   const { user, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
+  
+  const [collapsed, setCollapsed] = useState(() => {
+    return localStorage.getItem("sidebar_collapsed") === "true";
+  });
+
+  const toggleSidebar = () => {
+    setCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem("sidebar_collapsed", next.toString());
+      return next;
+    });
+  };
 
   async function handleLogout() {
     await logout();
@@ -109,47 +125,62 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="hidden md:flex flex-col w-56 shrink-0 min-h-screen bg-ink px-3 py-5">
-      {/* Brand */}
-      <div className="flex items-center gap-2.5 px-3 mb-8">
-        <img
-          src="/logo.svg"
-          alt="TraceHealth"
-          className="w-7 h-7 rounded-md object-contain shrink-0 border border-white/10"
-        />
-        <span className="font-serif text-white text-lg leading-none">TraceHealth</span>
+    <aside className={`hidden md:flex flex-col shrink-0 min-h-screen bg-ink py-5 transition-all duration-300 ease-in-out ${collapsed ? "w-16 px-2" : "w-56 px-3"}`}>
+      {/* Brand & Toggle */}
+      <div className={`flex items-center mb-8 ${collapsed ? "flex-col gap-4 px-1" : "justify-between px-3"}`}>
+        <div className={`flex items-center gap-2.5 ${collapsed ? "justify-center" : ""}`}>
+          <img
+            src="/logo.svg"
+            alt="TraceHealth"
+            className="w-7 h-7 rounded-md object-contain shrink-0 border border-white/10"
+          />
+          {!collapsed && <span className="font-serif text-white text-lg leading-none truncate">TraceHealth</span>}
+        </div>
+        <button 
+          onClick={toggleSidebar}
+          className="p-1 rounded-md text-ink-ghost hover:text-white hover:bg-white/10 transition-colors"
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
       </div>
 
       {/* Primary nav */}
       <nav className="space-y-0.5" aria-label="Primary navigation">
         {PRIMARY_NAV.map((item) => (
-          <NavItem key={item.to} {...item} />
+          <NavItem key={item.to} {...item} collapsed={collapsed} />
         ))}
       </nav>
 
       {/* Disease predict links */}
       <div className="mt-6">
-        <p className="px-3 mb-2 text-[10px] font-mono tracking-widest text-ink-light uppercase">
-          Predict
-        </p>
+        {!collapsed ? (
+          <p className="px-3 mb-2 text-[10px] font-mono tracking-widest text-ink-light uppercase truncate">
+            Predict
+          </p>
+        ) : (
+          <div className="w-full h-px bg-white/10 mb-2 mt-1" />
+        )}
         <div className="space-y-0.5">
           {DISEASE_NAV.map(({ to, label, dot }) => (
             <NavLink
               key={to}
               to={to}
+              title={collapsed ? label : undefined}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                `flex items-center gap-3 py-2 rounded-lg text-sm transition-colors ${
+                  collapsed ? "px-0 justify-center" : "px-3"
+                } ${
                   isActive
                     ? "bg-white/10 text-white font-medium"
                     : "text-ink-ghost hover:text-white hover:bg-white/5"
                 }`
               }
             >
-              <span
-                className="w-2 h-2 rounded-full shrink-0"
-                style={{ backgroundColor: dot }}
-              />
-              {label}
+              <div className="shrink-0 flex items-center justify-center w-5 h-5">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: dot }} />
+              </div>
+              {!collapsed && <span className="truncate">{label}</span>}
             </NavLink>
           ))}
         </div>
@@ -157,13 +188,15 @@ export default function Sidebar() {
 
       {/* Secondary nav */}
       <div className="mt-6 space-y-0.5">
+        {!collapsed && <div className="w-full h-px bg-white/10 mb-3" />}
         {SECONDARY_NAV.map((item) => (
-          <NavItem key={item.to} {...item} />
+          <NavItem key={item.to} {...item} collapsed={collapsed} />
         ))}
         {isAdmin && (
           <NavItem
             to="/admin"
             label="Admin"
+            collapsed={collapsed}
             icon={
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -180,31 +213,40 @@ export default function Sidebar() {
       <div className="border-t border-white/10 pt-3 space-y-0.5">
         <NavLink
           to="/profile"
+          title={collapsed ? (user?.name ?? "Profile") : undefined}
           className={({ isActive }) =>
-            `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+            `flex items-center gap-3 py-2 rounded-lg text-sm transition-colors ${
+              collapsed ? "px-0 justify-center" : "px-3"
+            } ${
               isActive
                 ? "bg-white/10 text-white"
                 : "text-ink-ghost hover:text-white hover:bg-white/5"
             }`
           }
         >
-          {/* Avatar initials */}
-          <span className="w-6 h-6 rounded-full bg-terra text-white text-[10px] font-semibold flex items-center justify-center shrink-0">
-            {user?.name
-              ? user.name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()
-              : "U"}
-          </span>
-          <span className="truncate">{user?.name ?? "Profile"}</span>
+          <div className="shrink-0 flex items-center justify-center w-5 h-5">
+            <span className="w-6 h-6 rounded-full bg-terra text-white text-[10px] font-semibold flex items-center justify-center">
+              {user?.name
+                ? user.name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()
+                : "U"}
+            </span>
+          </div>
+          {!collapsed && <span className="truncate">{user?.name ?? "Profile"}</span>}
         </NavLink>
 
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-ink-ghost hover:text-status-high hover:bg-status-high-dim transition-colors"
+          title={collapsed ? "Sign out" : undefined}
+          className={`w-full flex items-center gap-3 py-2 rounded-lg text-sm text-ink-ghost hover:text-status-high hover:bg-status-high-dim transition-colors ${
+            collapsed ? "px-0 justify-center" : "px-3"
+          }`}
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-          Sign out
+          <div className="shrink-0 flex items-center justify-center w-5 h-5">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </div>
+          {!collapsed && <span>Sign out</span>}
         </button>
       </div>
     </aside>
