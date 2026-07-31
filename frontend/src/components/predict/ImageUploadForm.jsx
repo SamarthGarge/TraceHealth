@@ -85,6 +85,7 @@ export default function ImageUploadForm({ disease, onResult }) {
     setPreview(null);
     setError("");
     if (inputRef.current) inputRef.current.value = "";
+    if (onResult) onResult(null); // Clear the prediction results from the screen
   }
 
   return (
