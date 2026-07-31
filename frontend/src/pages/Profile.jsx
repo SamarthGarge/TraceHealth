@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import apiClient from "../api/client";
 
@@ -49,7 +50,16 @@ export default function Profile() {
 
         {/* Page heading */}
         <div className="mb-8">
-          <h1 className="font-serif text-3xl text-ink mb-1">Profile & Settings</h1>
+          <div className="flex items-center gap-3 mb-1">
+            <button 
+              onClick={() => navigate("/dashboard")}
+              className="p-1.5 -ml-1.5 rounded-lg text-ink-ghost hover:text-ink hover:bg-black/5 transition-colors"
+              title="Back to Dashboard"
+            >
+              <ArrowLeft className="w-6 h-6" strokeWidth={1.5} />
+            </button>
+            <h1 className="font-serif text-3xl text-ink">Profile & Settings</h1>
+          </div>
           <p className="text-ink-light text-sm">Manage your account and data preferences.</p>
         </div>
 
