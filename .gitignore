@@ -28,10 +28,11 @@ training/data/raw/text/*.csv
 !training/data/raw/text/SOURCES.md
 training/data/processed/*
 !training/data/processed/.gitkeep
-models/*.pkl
-models/*.joblib
-models/vision/*.pt
-models/vision/*.pth
+# Model files are tracked for deployment on Render (ephemeral storage)
+# models/*.pkl
+# models/*.joblib
+# models/vision/*.pt
+# models/vision/*.pth
 !models/.gitkeep
 !models/model_metadata.json
 !models/vision/.gitkeep
