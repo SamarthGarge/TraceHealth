@@ -130,11 +130,11 @@ export default function Sidebar() {
       <div className={`flex items-center mb-8 ${collapsed ? "flex-col gap-4 px-1" : "justify-between px-3"}`}>
         <div className={`flex items-center gap-2.5 ${collapsed ? "justify-center" : ""}`}>
           <img
-            src="/logo.svg"
+            src="/new_logo.svg"
             alt="TraceHealth"
-            className="w-7 h-7 rounded-md object-contain shrink-0 border border-white/10"
+            className="w-7 h-7 rounded-lg object-contain shrink-0 border border-white/10"
           />
-          {!collapsed && <span className="font-serif text-white text-lg leading-none truncate">TraceHealth</span>}
+          {!collapsed && <span className="font-serif text-lg leading-none truncate bg-gradient-to-r from-[#D65F2E] to-[#924728] text-transparent bg-clip-text">TraceHealth</span>}
         </div>
         <button 
           onClick={toggleSidebar}

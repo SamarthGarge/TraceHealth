@@ -353,13 +353,13 @@ export default function LandingPage() {
       <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-parchment/85 border-b border-border">
         <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-3">
             <img
-              src="/logo.svg"
+              src="/new_logo.svg"
               alt="TraceHealth logo"
-              className="h-8 w-8 rounded-lg object-contain"
+              className="h-10 w-10 rounded-xl object-contain"
             />
-            <span className="font-display text-xl font-semibold text-ink">
+            <span className="font-display text-3xl font-semibold bg-gradient-to-r from-[#141314] via-[#733B24] to-[#C95A2D] text-transparent bg-clip-text tracking-tight">
               TraceHealth
             </span>
           </div>
@@ -1119,9 +1119,13 @@ export default function LandingPage() {
       {/* ══════════════════════ FOOTER ══════════════════════ */}
       <footer className="py-8 px-6 border-t border-border bg-parchment">
         <div className="mx-auto max-w-6xl flex flex-col md:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Activity className="h-4 w-4 text-terra" />
-            <span className="font-display text-base font-medium text-ink">
+          <div className="flex items-center gap-2.5">
+            <img
+              src="/new_logo.svg"
+              alt="TraceHealth logo"
+              className="h-9 w-9 rounded-xl object-contain"
+            />
+            <span className="font-display text-xl font-medium bg-gradient-to-r from-[#141314] via-[#733B24] to-[#C95A2D] text-transparent bg-clip-text">
               TraceHealth
             </span>
           </div>
