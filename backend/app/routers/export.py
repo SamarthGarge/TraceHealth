@@ -143,7 +143,8 @@ async def export_pdf_report(
 ):
     """
     Generate and stream a detailed PDF report of the user's prediction history.
-    Includes cover page, per-disease tables, SHAP highlights, and methodology note.
+    Includes cover page, per-disease tables, SHAP highlights, Grad-CAM images
+    for image-based predictions, and methodology note.
 
     NOTE: This route MUST be declared before /export/predictions/{prediction_id}
     so FastAPI does not match the literal string 'pdf' as a path parameter.
@@ -159,19 +160,47 @@ async def export_pdf_report(
 
     # Fetch user details for the cover page
     try:
-        from bson import ObjectId
+        from bson import ObjectId as _OID
         user_doc = await db.users.find_one(
-            {"_id": ObjectId(current_user["sub"])},
+            {"_id": _OID(current_user["sub"])},
             {"name": 1, "email": 1},
         )
     except Exception:
         user_doc = {}
+
+    # ── Fetch Grad-CAM bytes for image predictions ────────────────────────────
+    from motor.motor_asyncio import AsyncIOMotorGridFSBucket
+
+    image_predictions = []
+    for doc in docs:
+        if doc.get("input_type") != "image":
+            continue
+        gradcam_ref = doc.get("gradcam_ref")
+        gradcam_bytes = None
+        if gradcam_ref:
+            try:
+                fs = AsyncIOMotorGridFSBucket(db, bucket_name="gradcam_overlays")
+                grid_out = await fs.open_download_stream(ObjectId(gradcam_ref))
+                gradcam_bytes = await grid_out.read()
+            except Exception:
+                gradcam_bytes = None
+
+        image_predictions.append({
+            "disease":           doc.get("disease", ""),
+            "prediction_label":  doc.get("prediction_label", ""),
+            "confidence":        doc.get("ensemble_probability"),
+            "risk_level":        doc.get("ensemble_risk_level", ""),
+            "all_classes":       doc.get("all_classes", []),
+            "created_at":        doc.get("created_at"),
+            "gradcam_bytes":     gradcam_bytes,
+        })
 
     pdf_bytes = build_prediction_report(
         predictions=docs,
         user_name=user_doc.get("name", current_user.get("name", "")),
         user_email=user_doc.get("email", current_user.get("email", "")),
         disease_filter=disease or None,
+        image_predictions=image_predictions,
     )
 
     timestamp = _timestamp()
@@ -183,6 +212,7 @@ async def export_pdf_report(
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
 
 
 @router.get("/export/predictions/{prediction_id}")

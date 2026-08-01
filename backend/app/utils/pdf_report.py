@@ -17,7 +17,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    HRFlowable, PageBreak,
+    HRFlowable, PageBreak, Image as RLImage,
 )
 from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
 
@@ -152,6 +152,7 @@ def build_prediction_report(
     user_name: str = "",
     user_email: str = "",
     disease_filter: str | None = None,
+    image_predictions: list[dict] | None = None,
 ) -> bytes:
     """
     Build a PDF report from a list of prediction documents.
@@ -290,6 +291,89 @@ def build_prediction_report(
 
         story.append(HRFlowable(width=W, thickness=0.25, color=BORDER, spaceAfter=4*mm))
 
+    # ── Image Analysis Section ────────────────────────────────────────────────
+    if image_predictions:
+        story.append(PageBreak())
+        story.append(Paragraph("Image-Based Analysis", S["section"]))
+        story.append(Paragraph(
+            "The following results are from AI-assisted screening of medical images "
+            "(chest X-rays or CT scans). Grad-CAM heatmaps highlight the regions the model "
+            "focused on when making each prediction. Warm/red regions carry the highest influence.",
+            S["body"],
+        ))
+        story.append(Spacer(1, 4 * mm))
+
+        for ip in image_predictions:
+            d_label = DISEASE_LABEL.get(ip.get("disease", ""), ip.get("disease", "").title())
+            risk    = ip.get("risk_level", "")
+            risk_c  = RISK_COLOR.get(risk, INK_LIGHT)
+            conf    = ip.get("confidence")
+            label   = ip.get("prediction_label", "")
+            created = ip.get("created_at")
+
+            # Sub-header: disease + date
+            story.append(Paragraph(
+                f"{d_label} — {_fmt_date(created)}",
+                ParagraphStyle("ImgHead", fontName="Helvetica-Bold", fontSize=10,
+                               textColor=TERRA, spaceBefore=4*mm, spaceAfter=2*mm),
+            ))
+
+            # Summary table: label | risk | confidence
+            summary_rows = [
+                ["Detected Class", "Risk Level", "Confidence"],
+                [label, risk, _pct(conf)],
+            ]
+            st = Table(summary_rows, colWidths=[60*mm, 40*mm, 40*mm])
+            st.setStyle(TableStyle([
+                ("BACKGROUND",    (0, 0), (-1, 0), PARCHMENT),
+                ("FONTNAME",      (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTSIZE",      (0, 0), (-1, -1), 8),
+                ("TEXTCOLOR",     (1, 1), (1, 1), risk_c),
+                ("FONTNAME",      (0, 1), (-1, -1), "Helvetica"),
+                ("TOPPADDING",    (0, 0), (-1, -1), 3),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                ("LEFTPADDING",   (0, 0), (-1, -1), 6),
+                ("RIGHTPADDING",  (0, 0), (-1, -1), 6),
+                ("LINEBELOW",     (0, 0), (-1, 0), 0.5, BORDER),
+                ("LINEBELOW",     (0, 0), (-1, -1), 0.25, BORDER),
+            ]))
+            story.append(st)
+            story.append(Spacer(1, 3 * mm))
+
+            # Class probabilities table
+            all_classes = ip.get("all_classes", [])
+            if all_classes:
+                prob_rows = [["Class", "Probability"]]
+                for c in all_classes:
+                    prob_rows.append([c.get("label", ""), _pct(c.get("prob"))])
+                pt = Table(prob_rows, colWidths=[80*mm, 40*mm])
+                pt.setStyle(_TABLE_HEADER_STYLE)
+                story.append(pt)
+                story.append(Spacer(1, 3 * mm))
+
+            # Grad-CAM image
+            gradcam_bytes = ip.get("gradcam_bytes")
+            if gradcam_bytes:
+                try:
+                    img_buf = BytesIO(gradcam_bytes)
+                    rl_img  = RLImage(img_buf, width=120 * mm, height=90 * mm)
+                    rl_img.hAlign = "LEFT"
+                    story.append(Paragraph(
+                        "Grad-CAM Heatmap",
+                        ParagraphStyle("HeatmapLabel", fontName="Helvetica-Bold", fontSize=8,
+                                       textColor=INK, spaceAfter=2*mm),
+                    ))
+                    story.append(rl_img)
+                    story.append(Paragraph(
+                        "Warm/red regions had the highest influence on the prediction result.",
+                        ParagraphStyle("HeatmapNote", fontName="Helvetica-Oblique", fontSize=7,
+                                       textColor=INK_LIGHT, spaceBefore=2*mm, spaceAfter=3*mm),
+                    ))
+                except Exception:
+                    pass  # skip if image cannot be rendered
+
+            story.append(HRFlowable(width=W, thickness=0.25, color=BORDER, spaceAfter=4*mm))
+
     # ── Methodology ──────────────────────────────────────────────────────────
     story.append(Paragraph("Methodology", S["section"]))
     story.append(Paragraph(
@@ -297,7 +381,8 @@ def build_prediction_report(
         "WHO TB data, Lung Cancer Survey). Three algorithms — Logistic Regression, Random Forest, "
         "and XGBoost — are evaluated per disease using 5-fold cross-validation. "
         "Ensemble probability is the mean of all three models. "
-        "SHAP values are computed using TreeExplainer (RF, XGBoost) and LinearExplainer (LR).",
+        "SHAP values are computed using TreeExplainer (RF, XGBoost) and LinearExplainer (LR). "
+        "Image-based predictions use a fine-tuned CNN with Grad-CAM visualisation.",
         S["body"],
     ))
     story.append(Spacer(1, 3*mm))

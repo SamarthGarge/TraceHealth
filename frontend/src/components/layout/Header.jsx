@@ -38,7 +38,8 @@ export default function Header() {
 
   const navLinks = [
     { to: "/predict/diabetes", label: "Predict" },
-    { to: "/insights",        label: "Insights" },
+    { to: "/resources",        label: "Resources" },
+    { to: "/about-models",     label: "About Models" },
     { to: "/symptom-check",   label: "Symptom Check" },
   ];
 

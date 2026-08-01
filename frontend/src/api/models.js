@@ -6,7 +6,7 @@ import apiClient from "./client";
 
 /**
  * Fetch model metadata for all 4 diseases.
- * Used on the Dashboard and Insights pages.
+ * Used on the Dashboard and About Models page.
  * @returns {Promise<{metadata: Array}>}
  */
 export async function getModelsMetadata() {

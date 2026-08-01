@@ -17,7 +17,8 @@ const History       = lazy(() => import("./pages/History"));
 const HistoryDetail = lazy(() => import("./pages/HistoryDetail"));
 const Uploads       = lazy(() => import("./pages/Uploads"));
 const Export        = lazy(() => import("./pages/Export"));
-const Insights      = lazy(() => import("./pages/Insights"));
+const Resources     = lazy(() => import("./pages/Resources"));
+const AboutModels   = lazy(() => import("./pages/AboutModels"));
 const Profile       = lazy(() => import("./pages/Profile"));
 const Admin         = lazy(() => import("./pages/Admin"));
 const SymptomCheck  = lazy(() => import("./pages/SymptomCheck"));
@@ -37,7 +38,7 @@ function PageLoader() {
 /**
  * Route definitions — all 27 routes from Screen Inventory v2.0.
  * AuthGuard wraps all routes that require authentication.
- * Public routes (Landing, Login, Signup, Insights) are accessible without auth.
+ * Public routes (Landing, Login, Signup, Resources, AboutModels) are accessible without auth.
  */
 export default function App() {
   return (
@@ -49,7 +50,8 @@ export default function App() {
         <Route path="/signup"          element={<Signup />} />
         <Route path="/admin/login"     element={<AdminLogin />} />
         <Route path="/auth/callback"   element={<OAuthCallback />} />
-        <Route path="/insights"        element={<Insights />} />
+        <Route path="/resources"           element={<Resources />} />
+        <Route path="/about-models"         element={<AboutModels />} />
 
         {/* Guest + Auth — predictions and symptom check work for everyone */}
         <Route path="/predict"           element={<Predict />} />
