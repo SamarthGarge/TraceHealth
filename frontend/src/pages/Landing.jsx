@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -7,12 +7,17 @@ import {
   Stethoscope,
   Wind,
   ShieldCheck,
-  Clock,
-  Brain,
   Lock,
   CheckCircle2,
-  TrendingUp,
+  Brain,
   Layers,
+  TrendingUp,
+  Zap,
+  FileText,
+  Sparkles,
+  ArrowUpRight,
+  Menu,
+  X,
 } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -20,106 +25,48 @@ import { useGSAP } from "@gsap/react";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-/* ─── Reduced-motion helper ─── */
+/* ─── Helpers ─── */
 const prefersReducedMotion = () =>
   typeof window !== "undefined" &&
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-/* ─── Smooth scroll for anchor links ─── */
 function scrollTo(e, id) {
   e.preventDefault();
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 }
 
+/* Custom easing curves (Emil Kowalski principles) */
+const EASE_OUT_STRONG = "cubic-bezier(0.23, 1, 0.32, 1)";
+const EASE_DRAWER = "cubic-bezier(0.32, 0.72, 0, 1)";
+
 /* ═══════════════════════════════════════════════════════════════════════════════
    DATA
-   Only hex values needed for dynamic inline styles (per-disease accent colors).
-   All static styling uses Tailwind DataLens utility classes.
 ═══════════════════════════════════════════════════════════════════════════════ */
 
 const diseases = [
   {
-    name: "Diabetes",
-    icon: Activity,
-    hex: "#C25539",
-    levelHex: "#4D7A60",
-    riskPct: 12.5,
-    level: "Low",
-    inputs: 8,
-    desc: "Evaluates metabolic markers — glucose, insulin sensitivity, BMI, and family predisposition.",
-    factors: [
-      { label: "Blood Glucose", w: 72 },
-      { label: "BMI Index", w: 58 },
-      { label: "Family History", w: 41 },
-    ],
+    key: "diabetes", name: "Diabetes", icon: Activity, hex: "#C25539",
+    inputs: 8, tagline: "Metabolic markers decoded",
+    desc: "Glucose, insulin sensitivity, BMI, and family predisposition — scored by three models simultaneously.",
+    features: ["Blood Glucose", "BMI", "Insulin", "Age"],
   },
   {
-    name: "Heart Disease",
-    icon: HeartPulse,
-    hex: "#8B5D6B",
-    levelHex: "#B8862E",
-    riskPct: 42.1,
-    level: "Moderate",
-    inputs: 13,
-    desc: "Analyses cardiovascular indicators — cholesterol, blood pressure, ECG patterns, and angina.",
-    factors: [
-      { label: "Cholesterol", w: 81 },
-      { label: "Blood Pressure", w: 67 },
-      { label: "Resting ECG", w: 53 },
-    ],
+    key: "heart", name: "Heart Disease", icon: HeartPulse, hex: "#8B5D6B",
+    inputs: 13, tagline: "Cardiovascular risk clarity",
+    desc: "Cholesterol, blood pressure, ECG patterns, and 10 more cardiac indicators assessed in parallel.",
+    features: ["Cholesterol", "Blood Pressure", "ECG", "Max Heart Rate"],
   },
   {
-    name: "Tuberculosis",
-    icon: Stethoscope,
-    hex: "#5B7C99",
-    levelHex: "#4D7A60",
-    riskPct: 8.3,
-    level: "Low",
-    inputs: 9,
-    desc: "Screens respiratory symptoms, exposure history, and immune markers for TB probability.",
-    factors: [
-      { label: "Cough Duration", w: 64 },
-      { label: "Exposure Risk", w: 55 },
-      { label: "Night Sweats", w: 49 },
-    ],
+    key: "tb", name: "Tuberculosis", icon: Stethoscope, hex: "#5B7C99",
+    inputs: 9, tagline: "Respiratory symptom screening",
+    desc: "Cough duration, exposure history, and immune markers screened for TB probability.",
+    features: ["Cough Duration", "Exposure Risk", "Night Sweats", "Fever"],
   },
   {
-    name: "Lung Cancer",
-    icon: Wind,
-    hex: "#A68A4E",
-    levelHex: "#B23A3A",
-    riskPct: 61.7,
-    level: "High",
-    inputs: 11,
-    desc: "Weighs smoking history, occupational exposure, and respiratory symptoms for malignancy risk.",
-    factors: [
-      { label: "Smoking Index", w: 88 },
-      { label: "Breath. Difficulty", w: 70 },
-      { label: "Chest Pain", w: 62 },
-    ],
-  },
-];
-
-const steps = [
-  {
-    num: "01",
-    title: "Select a disease module",
-    desc: "Choose from Diabetes, Heart Disease, Tuberculosis, or Lung Cancer. Each module has a tailored input form.",
-  },
-  {
-    num: "02",
-    title: "Enter your health metrics",
-    desc: "Input your vitals and lifestyle indicators. Values are processed in-session — nothing stored without consent.",
-  },
-  {
-    num: "03",
-    title: "Compare model predictions",
-    desc: "Logistic Regression, Random Forest, and XGBoost each score your risk independently.",
-  },
-  {
-    num: "04",
-    title: "Understand the explanation",
-    desc: "SHAP waterfall charts break down which factors pushed your score up or down, and by how much.",
+    key: "cancer", name: "Lung Cancer", icon: Wind, hex: "#A68A4E",
+    inputs: 11, tagline: "Malignancy risk factors",
+    desc: "Smoking history, occupational exposure, and respiratory symptoms weighed for cancer likelihood.",
+    features: ["Smoking Index", "Chest Pain", "Breath Difficulty", "Fatigue"],
   },
 ];
 
@@ -127,640 +74,668 @@ const shapBars = [
   { label: "Cholesterol", val: +0.41, pos: true },
   { label: "Blood Pressure", val: +0.29, pos: true },
   { label: "Age", val: +0.16, pos: true },
-  { label: "Activity", val: -0.19, pos: false },
-  { label: "Diet", val: -0.08, pos: false },
-];
-
-const trustItems = [
-  { icon: ShieldCheck, text: "Explicit consent required before any prediction is saved" },
-  { icon: Lock, text: "Passwords hashed server-side — never stored in plaintext" },
-  { icon: Clock, text: "Short-lived access tokens with automatic rotation" },
-  { icon: CheckCircle2, text: "Permanent deletion — no soft-deletes or hidden retention" },
-  { icon: Activity, text: "Per-user data isolation — zero cross-account leakage" },
+  { label: "Physical Activity", val: -0.19, pos: false },
+  { label: "Dietary Habits", val: -0.08, pos: false },
 ];
 
 const heroModels = [
-  { name: "Logistic Regression", abbr: "LogReg", pct: 38, hex: "#5B7C99" },
-  { name: "Random Forest", abbr: "R.Forest", pct: 61, hex: "#8B5D6B", active: true },
-  { name: "XGBoost", abbr: "XGB", pct: 57, hex: "#A68A4E" },
+  { name: "Logistic Regression", pct: 38, hex: "#5B7C99" },
+  { name: "Random Forest", pct: 61, hex: "#8B5D6B", best: true },
+  { name: "XGBoost", pct: 57, hex: "#A68A4E" },
 ];
 
 /* ═══════════════════════════════════════════════════════════════════════════════
-   LANDING PAGE
+   ANIMATED COUNTER COMPONENT
 ═══════════════════════════════════════════════════════════════════════════════ */
+function AnimatedCounter({ end, suffix = "", duration = 1.4 }) {
+  const ref = useRef(null);
+  const [val, setVal] = useState(0);
+  const [triggered, setTriggered] = useState(false);
+
+  useEffect(() => {
+    if (!ref.current || prefersReducedMotion()) { setVal(end); return; }
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting && !triggered) {
+        setTriggered(true);
+        const start = performance.now();
+        const animate = (now) => {
+          const t = Math.min((now - start) / (duration * 1000), 1);
+          const eased = 1 - Math.pow(1 - t, 3);
+          setVal(Math.round(eased * end));
+          if (t < 1) requestAnimationFrame(animate);
+        };
+        requestAnimationFrame(animate);
+      }
+    }, { threshold: 0.3 });
+    obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, [end, duration, triggered]);
+
+  return <span ref={ref}>{val}{suffix}</span>;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   TILT CARD COMPONENT (3D depth on hover — Kowalski spring-like feel)
+═══════════════════════════════════════════════════════════════════════════════ */
+function TiltCard({ children, className = "", style = {}, ...props }) {
+  const cardRef = useRef(null);
+
+  const handleMove = useCallback((e) => {
+    if (prefersReducedMotion() || !cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    gsap.to(cardRef.current, {
+      rotateY: x * 6, rotateX: -y * 6,
+      duration: 0.4, ease: "power2.out",
+    });
+  }, []);
+
+  const handleLeave = useCallback(() => {
+    if (!cardRef.current) return;
+    gsap.to(cardRef.current, {
+      rotateY: 0, rotateX: 0,
+      duration: 0.6, ease: "power3.out",
+    });
+  }, []);
+
+  return (
+    <div
+      ref={cardRef}
+      className={className}
+      style={{ ...style, perspective: "800px", transformStyle: "preserve-3d" }}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   TYPEWRITER HEADLINE COMPONENT
+   Types out text character by character with a blinking cursor.
+═══════════════════════════════════════════════════════════════════════════════ */
+function TypewriterHeadline() {
+  const lines = [
+    { text: "Know your risk.", color: "text-ink" },
+    { text: "Know why.", color: "text-terra" },
+  ];
+  const [displayLines, setDisplayLines] = useState(() => lines.map(() => ""));
+  const [cursorLine, setCursorLine] = useState(0);
+  const [done, setDone] = useState(false);
+  const charDelay = 65;
+  const lineDelay = 400;
+
+  useEffect(() => {
+    if (prefersReducedMotion()) {
+      setDisplayLines(lines.map((l) => l.text));
+      setDone(true);
+      return;
+    }
+    let lineIdx = 0;
+    let charIdx = 0;
+    let timeout;
+
+    function typeNext() {
+      if (lineIdx >= lines.length) { setDone(true); return; }
+      const currentText = lines[lineIdx].text;
+      if (charIdx <= currentText.length) {
+        setDisplayLines((prev) => {
+          const next = [...prev];
+          next[lineIdx] = currentText.slice(0, charIdx);
+          return next;
+        });
+        setCursorLine(lineIdx);
+        charIdx++;
+        timeout = setTimeout(typeNext, charDelay);
+      } else {
+        lineIdx++;
+        charIdx = 0;
+        timeout = setTimeout(typeNext, lineDelay);
+      }
+    }
+    timeout = setTimeout(typeNext, 600);
+    return () => clearTimeout(timeout);
+  }, []);
+
+  return (
+    <h1
+      className="font-display font-semibold leading-[1.04] tracking-tight hero-typewriter"
+      style={{ fontSize: "clamp(2.8rem, 6vw, 4.8rem)" }}
+      aria-label="Know your risk. Know why."
+    >
+      {lines.map((line, i) => (
+        <React.Fragment key={i}>
+          <span className={line.color}>
+            {displayLines[i] || ""}
+          </span>
+          {/* Blinking cursor — shows on current typing line or at end */}
+          {((!done && cursorLine === i) || (done && i === lines.length - 1)) && (
+            <span
+              className="inline-block w-[3px] ml-0.5 animate-pulse"
+              style={{
+                height: "0.85em",
+                background: "#C25539",
+                borderRadius: 1,
+                verticalAlign: "baseline",
+                marginBottom: "-0.05em",
+              }}
+              aria-hidden="true"
+            />
+          )}
+          {i < lines.length - 1 && <br />}
+        </React.Fragment>
+      ))}
+    </h1>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   LANDING PAGE
+   Hallmark:  Editorial Luxury vibe, Asymmetric Editorial Split layout
+   Taste:     VARIANCE=7, MOTION=6, DENSITY=3 (Premium consumer health)
+   Kowalski:  Custom ease-out curves, <300ms UI, scale-on-press, 3D tilt
+═══════════════════════════════════════════════════════════════════════════════ */
+
 export default function LandingPage() {
   const containerRef = useRef(null);
   const heroRef = useRef(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  /* Element refs for hero entrance timeline */
-  const heroEyebrow = useRef(null);
-  const heroHeadline = useRef(null);
-  const heroSub = useRef(null);
-  const heroCta = useRef(null);
-  const heroCard = useRef(null);
-  const heroBlobL = useRef(null);
-  const heroBlobR = useRef(null);
+  /* ── Hero entrance timeline ─── */
+  useGSAP(() => {
+    if (prefersReducedMotion()) return;
 
-  /* ── Hero entrance timeline ───────────────────────────────────────── */
-  useGSAP(
-    () => {
-      if (prefersReducedMotion()) return;
+    const tl = gsap.timeline({ defaults: { ease: EASE_OUT_STRONG } });
 
-      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-      tl.from(heroEyebrow.current, { y: 20, opacity: 0, duration: 0.6 })
-        .from(
-          heroHeadline.current,
-          { y: 40, opacity: 0, duration: 0.9, ease: "power4.out" },
-          "-=0.3"
-        )
-        .from(heroSub.current, { y: 24, opacity: 0, duration: 0.7 }, "-=0.5")
-        .from(heroCta.current, { y: 20, opacity: 0, duration: 0.6 }, "-=0.4")
-        .from(
-          heroCard.current,
-          { x: 60, opacity: 0, duration: 1.0, ease: "power3.out" },
-          "-=0.6"
-        );
+    tl.from(".hero-badge", { y: 12, opacity: 0, duration: 0.45 })
+      .from(".hero-typewriter", { y: 16, opacity: 0, duration: 0.5 }, "-=0.2")
+      .from(".hero-sub", { y: 16, opacity: 0, duration: 0.5 }, "-=0.35")
+      .from(".hero-actions", { y: 14, opacity: 0, duration: 0.45 }, "-=0.25")
+      .from(".hero-trust-row", { y: 10, opacity: 0, duration: 0.4 }, "-=0.2")
+      .from(".hero-card-shell", {
+        scale: 0.92, opacity: 0, rotateY: -8, duration: 0.9,
+        ease: "back.out(1.15)", transformOrigin: "left center",
+      }, "-=0.55");
 
-      /* Blob parallax on scroll */
-      gsap.to(heroBlobL.current, {
-        y: -80,
-        scrollTrigger: {
-          trigger: heroRef.current,
-          start: "top top",
-          end: "bottom top",
-          scrub: 1.8,
-        },
-      });
-      gsap.to(heroBlobR.current, {
-        y: -50,
-        scrollTrigger: {
-          trigger: heroRef.current,
-          start: "top top",
-          end: "bottom top",
-          scrub: 1.2,
-        },
-      });
-    },
-    { scope: heroRef }
-  );
+    /* Parallax blobs */
+    gsap.to(".hero-glow-1", {
+      y: -70, scrollTrigger: { trigger: heroRef.current, start: "top top", end: "bottom top", scrub: 1.6 },
+    });
+    gsap.to(".hero-glow-2", {
+      y: -45, scrollTrigger: { trigger: heroRef.current, start: "top top", end: "bottom top", scrub: 1.2 },
+    });
+  }, { scope: heroRef });
 
-  /* ── Scroll-triggered section animations ──────────────────────────── */
-  useGSAP(
-    () => {
-      if (prefersReducedMotion()) return;
+  /* ── Scroll-triggered animations ─── */
+  useGSAP(() => {
+    if (prefersReducedMotion()) return;
 
-      /* Stats fade-stagger */
-      gsap.from(".stat-item", {
-        y: 30,
-        opacity: 0,
-        duration: 0.7,
-        stagger: 0.12,
-        ease: "power3.out",
+    /* Section headings — clip-path reveal (Kowalski technique) */
+    gsap.utils.toArray(".s-head").forEach((el) => {
+      gsap.from(el, {
+        clipPath: "inset(0 0 100% 0)", y: 20, opacity: 0,
+        duration: 0.8, ease: EASE_OUT_STRONG,
         immediateRender: false,
-        scrollTrigger: { trigger: ".stats-section", start: "top 85%" },
+        scrollTrigger: { trigger: el, start: "top 90%" },
       });
+    });
 
-      /* Section headings slide up */
-      gsap.utils.toArray(".section-heading").forEach((el) => {
-        gsap.from(el, {
-          y: 36,
-          opacity: 0,
-          duration: 0.8,
-          ease: "power3.out",
-          immediateRender: false,
-          scrollTrigger: { trigger: el, start: "top 88%" },
-        });
-      });
+    /* Stat counters fade + slide */
+    gsap.from(".stat-block", {
+      y: 32, opacity: 0, duration: 0.6, stagger: 0.08,
+      ease: EASE_OUT_STRONG, immediateRender: false,
+      scrollTrigger: { trigger: ".stats-row", start: "top 85%" },
+    });
 
-      /* Disease cards stagger from below */
-      gsap.from(".disease-card", {
-        y: 40,
-        opacity: 0,
-        duration: 0.7,
-        stagger: 0.12,
-        ease: "power3.out",
-        immediateRender: false,
-        scrollTrigger: { trigger: ".diseases-section", start: "top 80%" },
-      });
+    /* Disease cards — stagger with subtle 3D rotation */
+    gsap.from(".d-card", {
+      y: 50, opacity: 0, rotateX: 8, duration: 0.65, stagger: 0.1,
+      ease: EASE_OUT_STRONG, immediateRender: false,
+      transformOrigin: "bottom center",
+      scrollTrigger: { trigger: ".diseases-grid", start: "top 82%" },
+    });
 
-      /* Risk gauge fills — scaleX for GPU performance */
-      gsap.from(".risk-gauge-fill", {
-        scaleX: 0,
-        duration: 1.0,
-        ease: "power3.out",
-        stagger: 0.1,
-        immediateRender: false,
-        scrollTrigger: { trigger: ".diseases-section", start: "top 78%" },
-      });
+    /* Steps — stagger from left */
+    gsap.from(".step-block", {
+      x: -36, opacity: 0, duration: 0.6, stagger: 0.1,
+      ease: EASE_OUT_STRONG, immediateRender: false,
+      scrollTrigger: { trigger: ".steps-area", start: "top 82%" },
+    });
 
-      /* Factor bars — scaleX for GPU performance */
-      gsap.from(".factor-bar", {
-        scaleX: 0,
-        duration: 0.7,
-        ease: "power2.out",
-        stagger: 0.03,
-        immediateRender: false,
-        scrollTrigger: { trigger: ".diseases-section", start: "top 76%" },
-      });
+    /* Step connector line — scrub */
+    gsap.set(".step-line-fill", { scaleY: 0, transformOrigin: "top center" });
+    gsap.to(".step-line-fill", {
+      scaleY: 1, ease: "none",
+      scrollTrigger: { trigger: ".steps-area", start: "top 72%", end: "bottom 60%", scrub: 0.5 },
+    });
 
-      /* Step connector line — scrub-animated scaleY */
-      gsap.set(".step-line", { scaleY: 0, transformOrigin: "top center" });
-      gsap.to(".step-line", {
-        scaleY: 1,
-        ease: "none",
-        scrollTrigger: {
-          trigger: ".steps-section",
-          start: "top 70%",
-          end: "bottom 60%",
-          scrub: 0.8,
-        },
-      });
+    /* Bento cells — stagger with blur-in (high-end-visual-design entry) */
+    gsap.from(".bento-item", {
+      y: 40, opacity: 0, filter: "blur(4px)", duration: 0.8, stagger: 0.08,
+      ease: EASE_OUT_STRONG, immediateRender: false,
+      scrollTrigger: { trigger: ".bento-area", start: "top 82%" },
+    });
 
-      /* Steps stagger from left */
-      gsap.from(".step-item", {
-        x: -36,
-        opacity: 0,
-        duration: 0.7,
-        stagger: 0.15,
-        ease: "power3.out",
-        immediateRender: false,
-        scrollTrigger: { trigger: ".steps-section", start: "top 80%" },
-      });
+    /* SHAP bars — scaleX GPU */
+    gsap.from(".shap-fill", {
+      scaleX: 0, duration: 0.7, stagger: 0.06,
+      ease: EASE_OUT_STRONG, immediateRender: false,
+      scrollTrigger: { trigger: ".bento-area", start: "top 76%" },
+    });
 
-      /* Bento cells stagger from below */
-      gsap.from(".bento-cell", {
-        y: 44,
-        opacity: 0,
-        duration: 0.8,
-        stagger: 0.1,
-        ease: "power3.out",
-        immediateRender: false,
-        scrollTrigger: { trigger: ".features-section", start: "top 80%" },
-      });
+    /* Trust items — stagger from right */
+    gsap.from(".trust-pill", {
+      x: 28, opacity: 0, duration: 0.5, stagger: 0.06,
+      ease: "power2.out", immediateRender: false,
+      scrollTrigger: { trigger: ".trust-area", start: "top 84%" },
+    });
 
-      /* SHAP bars — scaleX */
-      gsap.from(".shap-bar-fill", {
-        scaleX: 0,
-        duration: 0.8,
-        stagger: 0.08,
-        ease: "power3.out",
-        immediateRender: false,
-        scrollTrigger: { trigger: ".features-section", start: "top 74%" },
-      });
+    /* CTA — scale in with blur */
+    gsap.from(".cta-box", {
+      scale: 0.95, opacity: 0, filter: "blur(6px)", duration: 0.9,
+      ease: EASE_OUT_STRONG, immediateRender: false,
+      scrollTrigger: { trigger: ".cta-area", start: "top 86%" },
+    });
 
-      /* Sparkline path draw */
-      gsap.from(".spark-path", {
-        strokeDashoffset: 300,
-        duration: 1.2,
-        ease: "power2.out",
-        immediateRender: false,
-        scrollTrigger: { trigger: ".features-section", start: "top 74%" },
-      });
-
-      /* Trust items slide from right */
-      gsap.from(".trust-item", {
-        x: 28,
-        opacity: 0,
-        duration: 0.6,
-        stagger: 0.08,
-        ease: "power2.out",
-        immediateRender: false,
-        scrollTrigger: { trigger: ".trust-section", start: "top 82%" },
-      });
-
-      /* CTA scale up */
-      gsap.from(".cta-inner", {
-        scale: 0.96,
-        opacity: 0,
-        duration: 0.9,
-        ease: "power3.out",
-        immediateRender: false,
-        scrollTrigger: { trigger: ".cta-section", start: "top 85%" },
-      });
-    },
-    { scope: containerRef }
-  );
+    /* Sparkline draw */
+    gsap.from(".spark-line", {
+      strokeDashoffset: 300, duration: 1.2, ease: "power2.out",
+      immediateRender: false,
+      scrollTrigger: { trigger: ".bento-area", start: "top 76%" },
+    });
+  }, { scope: containerRef });
 
   /* ═══════════════════════════════════════════════════════════════════════
      RENDER
   ═══════════════════════════════════════════════════════════════════════ */
+
   return (
-    <div
-      ref={containerRef}
-      className="min-h-screen overflow-x-hidden bg-parchment text-ink font-body"
-    >
-      {/* ══════════════════════ NAVBAR ══════════════════════ */}
-      <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-parchment/85 border-b border-border">
-        <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
+    <div ref={containerRef} className="min-h-screen overflow-x-hidden bg-parchment text-ink font-body">
+
+      {/* ════════════════════ FLOATING PILL NAV (Hallmark N5) ════════════════════ */}
+      <header className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 px-4 pointer-events-none">
+        <nav className="pointer-events-auto flex items-center gap-1 rounded-full bg-white/80 backdrop-blur-lg border border-border/50 shadow-lg shadow-ink/[0.04] px-2 py-1.5">
           {/* Logo */}
-          <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-2 pl-2 pr-3 group">
             <img
-              src="/new_logo.svg"
-              alt="TraceHealth logo"
-              className="h-10 w-10 rounded-xl object-contain"
+              src="/new_logo.svg" alt="TraceHealth"
+              className="h-8 w-8 rounded-lg object-contain transition-transform duration-200 group-hover:scale-105"
+              style={{ transitionTimingFunction: EASE_OUT_STRONG }}
             />
-            <span className="font-display text-3xl font-semibold bg-gradient-to-r from-[#141314] via-[#733B24] to-[#C95A2D] text-transparent bg-clip-text tracking-tight">
+            <span className="font-display text-lg font-semibold bg-gradient-to-r from-ink via-[#733B24] to-terra text-transparent bg-clip-text tracking-tight hidden sm:inline">
               TraceHealth
             </span>
-          </div>
+          </Link>
 
-          {/* Desktop nav links */}
-          <nav className="hidden md:flex gap-8 items-center">
+          {/* Desktop links */}
+          <div className="hidden md:flex items-center">
             {[
+              { label: "Screening", id: "screening" },
               { label: "How it works", id: "how-it-works" },
-              { label: "Diseases", id: "diseases" },
               { label: "Features", id: "features" },
             ].map(({ label, id }) => (
               <a
-                key={label}
+                key={id}
                 href={`#${id}`}
                 onClick={(e) => scrollTo(e, id)}
-                className="text-sm font-medium text-ink-mid hover:text-ink transition-colors duration-base"
+                className="text-[13px] font-medium text-ink-mid hover:text-ink px-3 py-1.5 rounded-full hover:bg-parchment-lo transition-all duration-200"
+                style={{ transitionTimingFunction: EASE_OUT_STRONG }}
               >
                 {label}
               </a>
             ))}
-          </nav>
+          </div>
 
-          {/* Auth buttons */}
-          <div className="flex items-center gap-3">
-            <Link to="/login">
-              <button className="text-sm font-medium px-4 py-2 rounded-lg text-ink-mid hover:text-ink transition-colors duration-base">
-                Log in
-              </button>
-            </Link>
-            <Link to="/signup">
-              <button className="hidden sm:inline-flex text-sm font-semibold px-5 py-2.5 rounded-lg bg-terra text-white hover:bg-terra-dark transition-colors duration-base">
-                Start Free Assessment
+          {/* Separator */}
+          <div className="hidden md:block w-px h-5 bg-border mx-1" />
+
+          {/* Auth */}
+          <Link to="/login" className="hidden md:inline-flex text-[13px] font-medium text-ink-mid hover:text-ink px-3 py-1.5 rounded-full hover:bg-parchment-lo transition-all duration-200">
+            Log in
+          </Link>
+          <Link to="/predict/diabetes">
+            <button
+              className="hidden md:inline-flex items-center gap-1.5 text-[13px] font-semibold px-4 py-2 rounded-full bg-ink text-parchment hover:bg-ink-mid active:scale-[0.97] transition-all duration-200"
+              style={{ transitionTimingFunction: EASE_OUT_STRONG }}
+            >
+              Run Prediction
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
+          </Link>
+
+          {/* Mobile hamburger */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 rounded-full hover:bg-parchment-lo transition-colors duration-200"
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen
+              ? <X className="w-4.5 h-4.5 text-ink transition-transform duration-200 rotate-0" />
+              : <Menu className="w-4.5 h-4.5 text-ink-mid" />
+            }
+          </button>
+        </nav>
+
+        {/* Mobile menu overlay */}
+        {mobileMenuOpen && (
+          <div className="md:hidden pointer-events-auto fixed inset-0 top-16 bg-white/95 backdrop-blur-xl z-40 flex flex-col items-center pt-16 gap-4 animate-in fade-in">
+            {[
+              { label: "Screening", id: "screening" },
+              { label: "How it works", id: "how-it-works" },
+              { label: "Features", id: "features" },
+            ].map(({ label, id }, i) => (
+              <a
+                key={id}
+                href={`#${id}`}
+                onClick={(e) => { scrollTo(e, id); setMobileMenuOpen(false); }}
+                className="text-lg font-medium text-ink-mid hover:text-ink transition-colors"
+                style={{ animationDelay: `${i * 60}ms` }}
+              >
+                {label}
+              </a>
+            ))}
+            <div className="w-12 h-px bg-border my-2" />
+            <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-ink-mid">Log in</Link>
+            <Link to="/predict/diabetes" onClick={() => setMobileMenuOpen(false)}>
+              <button className="mt-2 px-8 py-3 rounded-full bg-ink text-parchment font-semibold">
+                Run Prediction
               </button>
             </Link>
           </div>
-        </div>
+        )}
       </header>
 
       <main>
-        {/* ══════════════════════ HERO ══════════════════════ */}
-        <section ref={heroRef} className="relative pt-20 pb-28 px-6 overflow-hidden">
-          {/* Ambient blobs */}
-          <div
-            ref={heroBlobL}
-            className="pointer-events-none absolute -top-40 -left-40 w-[560px] h-[560px] rounded-full blur-[110px] opacity-[0.12] bg-terra"
-          />
-          <div
-            ref={heroBlobR}
-            className="pointer-events-none absolute -bottom-48 -right-48 w-[520px] h-[520px] rounded-full blur-[130px] opacity-[0.08]"
-            style={{ background: "#5B7C99" }}
-          />
+        {/* ════════════════════ HERO ════════════════════
+            Hallmark: Asymmetric editorial split. Left=copy, Right=artifact card.
+            High-end: Double-bezel card architecture on the preview card.
+            Kowalski: Per-word stagger entrance with rotateX, custom ease curves.
+            Taste: VARIANCE=7, no generic centered hero.
+        ════════════════════════════════════════════════ */}
+        <section ref={heroRef} className="relative pt-32 pb-36 px-6 overflow-hidden min-h-[90vh] flex items-center">
+          {/* Ambient gradient orbs */}
+          <div className="hero-glow-1 pointer-events-none absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full opacity-[0.08]" style={{ background: "radial-gradient(circle, #C25539 0%, transparent 70%)" }} />
+          <div className="hero-glow-2 pointer-events-none absolute -bottom-48 -right-48 w-[460px] h-[460px] rounded-full opacity-[0.06]" style={{ background: "radial-gradient(circle, #5B7C99 0%, transparent 70%)" }} />
 
-          <div className="relative mx-auto max-w-7xl grid lg:grid-cols-[1.1fr_0.9fr] gap-16 items-center">
-            {/* Left column — text */}
+          {/* Noise overlay for physical feel (high-end-visual-design) */}
+          <div className="pointer-events-none fixed inset-0 z-[1] opacity-[0.025]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")", backgroundRepeat: "repeat" }} />
+
+          <div className="relative z-10 mx-auto max-w-7xl w-full grid lg:grid-cols-[1.2fr_0.8fr] gap-16 lg:gap-24 items-center">
+            {/* Left — editorial copy */}
             <div className="space-y-7">
-              {/* Eyebrow #1 (of max 2) */}
-              <div
-                ref={heroEyebrow}
-                className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-mono uppercase tracking-widest border border-border bg-white text-ink-light"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-status-low animate-pulse" />
-                Explainable Health Screening
+              {/* Eyebrow badge */}
+              <div className="hero-badge inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-[11px] font-mono uppercase tracking-[0.15em] border border-border bg-white/70 backdrop-blur-sm text-ink-light">
+                <Sparkles className="w-3 h-3 text-terra" />
+                Explainable AI Health Screening
               </div>
 
-              <h1
-                ref={heroHeadline}
-                className="font-display font-semibold leading-[1.08] tracking-tight"
-                style={{ fontSize: "clamp(2.8rem, 6vw, 4.8rem)" }}
-              >
-                Trace your health risks
-                <br className="hidden md:block" />
-                <span className="text-terra"> with absolute clarity.</span>
-              </h1>
+              {/* Headline — typewriter effect */}
+              <TypewriterHeadline />
 
-              <p
-                ref={heroSub}
-                className="text-lg md:text-xl max-w-lg leading-relaxed text-ink-mid"
-              >
-                Screen four conditions with three ML models simultaneously.
-                Every prediction includes SHAP explanations — so you know{" "}
-                <em className="font-display italic">why</em>.
+              <p className="hero-sub text-lg max-w-md leading-relaxed text-ink-mid">
+                Screen four diseases with three ML models at once.
+                Every result ships with SHAP explanations — so you
+                understand exactly what drove your score.
               </p>
 
-              <div
-                ref={heroCta}
-                className="flex flex-wrap items-center gap-4 pt-1"
-              >
-                <Link to="/signup">
-                  <button className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-xl text-base font-semibold bg-terra text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]">
-                    Start Free Assessment
-                    <ArrowRight className="w-4 h-4" />
+              {/* CTA group */}
+              <div className="hero-actions flex flex-wrap items-center gap-4 pt-1">
+                <Link to="/predict/diabetes">
+                  {/* Double-element CTA button (high-end-visual-design Button-in-Button) */}
+                  <button
+                    className="group inline-flex items-center gap-3 pl-7 pr-2 py-2 rounded-full text-[15px] font-semibold bg-terra text-white shadow-lg shadow-terra/20 hover:shadow-xl hover:shadow-terra/25 active:scale-[0.97] transition-all duration-200"
+                    style={{ transitionTimingFunction: EASE_OUT_STRONG }}
+                  >
+                    Start Screening
+                    <span className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 group-hover:translate-x-0.5 transition-all duration-200">
+                      <ArrowRight className="w-4 h-4" />
+                    </span>
                   </button>
                 </Link>
-                <Link to="/login">
-                  <button className="px-6 py-3.5 rounded-xl text-base font-medium border border-border text-ink-mid hover:text-ink hover:border-border-strong transition-colors duration-base">
-                    Log in
-                  </button>
-                </Link>
+                <a
+                  href="#how-it-works"
+                  onClick={(e) => scrollTo(e, "how-it-works")}
+                  className="text-sm font-medium text-ink-mid hover:text-ink transition-colors duration-200 underline underline-offset-4 decoration-border-strong/40 hover:decoration-terra/50"
+                  style={{ transitionTimingFunction: EASE_OUT_STRONG }}
+                >
+                  See how it works
+                </a>
+              </div>
+
+              {/* Trust micro-row */}
+              <div className="hero-trust-row flex flex-wrap items-center gap-x-6 gap-y-2 pt-2">
+                {[
+                  { icon: ShieldCheck, t: "No data stored without consent" },
+                  { icon: Zap, t: "Results in under 2s" },
+                  { icon: FileText, t: "PDF & image export" },
+                ].map(({ icon: I, t }) => (
+                  <div key={t} className="flex items-center gap-1.5">
+                    <I className="w-3.5 h-3.5 text-sage" />
+                    <span className="text-[11px] text-ink-light font-medium">{t}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Right column — mini prediction card preview */}
-            <div ref={heroCard} className="hidden lg:block">
-              <div className="rounded-2xl bg-white border border-border shadow-xl overflow-hidden">
-                {/* Accent gradient bar */}
-                <div
-                  className="h-1"
-                  style={{
-                    background:
-                      "linear-gradient(to right, #C25539, #8B5D6B, #A68A4E)",
-                  }}
-                />
-                <div className="p-7">
-                  <div className="font-mono text-[10px] uppercase tracking-widest text-ink-ghost mb-1">
-                    Prediction Analysis
-                  </div>
-                  <h3 className="font-display text-xl font-medium text-ink mb-5">
-                    Heart Disease Risk
-                  </h3>
+            {/* Right — Double-bezel preview card (high-end-visual-design Doppelrand) */}
+            <TiltCard className="hero-card-shell hidden lg:block">
+              {/* Outer shell */}
+              <div className="rounded-[1.5rem] bg-ink/[0.03] border border-border/50 p-1.5 shadow-2xl shadow-ink/[0.06]">
+                {/* Inner core */}
+                <div className="rounded-[calc(1.5rem-6px)] bg-white overflow-hidden" style={{ boxShadow: "inset 0 1px 1px rgba(255,255,255,0.8)" }}>
+                  {/* Gradient accent bar */}
+                  <div className="h-1" style={{ background: "linear-gradient(90deg, #C25539 0%, #8B5D6B 40%, #5B7C99 70%, #A68A4E 100%)" }} />
 
-                  {/* Model tabs */}
-                  <div className="flex gap-1 p-1 rounded-lg bg-parchment-lo mb-6">
-                    {heroModels.map((m) => (
-                      <button
-                        key={m.name}
-                        className="flex-1 py-1.5 rounded-md text-[11px] font-mono font-medium transition-all duration-fast"
-                        style={{
-                          background: m.active ? "#fff" : "transparent",
-                          color: m.active ? m.hex : "#8A7D74",
-                          boxShadow: m.active
-                            ? "0 1px 3px rgba(0,0,0,0.08)"
-                            : "none",
-                        }}
-                      >
-                        {m.abbr}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Model bars */}
-                  <div className="space-y-3.5">
-                    {heroModels.map((m) => (
-                      <div key={m.name}>
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="text-xs font-medium text-ink">
-                            {m.name}
-                          </span>
-                          <span
-                            className="font-mono text-xs font-semibold"
-                            style={{ color: m.hex }}
-                          >
-                            {m.pct}%
-                          </span>
-                        </div>
-                        <div className="h-2 rounded-full bg-parchment-lo overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all duration-slow"
-                            style={{
-                              width: `${m.pct}%`,
-                              background: m.active ? m.hex : `${m.hex}80`,
-                            }}
-                          />
-                        </div>
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-5">
+                      <div>
+                        <p className="font-mono text-[10px] uppercase tracking-widest text-ink-ghost">Live Preview</p>
+                        <h3 className="font-display text-lg font-semibold text-ink mt-0.5">Heart Disease Risk</h3>
                       </div>
-                    ))}
-                  </div>
+                      <span className="text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-status-moderate-dim text-status-moderate">
+                        Moderate
+                      </span>
+                    </div>
 
-                  {/* Risk annotation */}
-                  <div
-                    className="mt-5 flex items-start gap-2.5 rounded-lg p-3 text-xs bg-status-moderate-dim"
-                    style={{ border: "1px solid rgba(184,134,46,0.15)" }}
-                  >
-                    <div className="w-1.5 h-1.5 rounded-full bg-status-moderate mt-1 shrink-0" />
-                    <span className="text-status-moderate leading-relaxed">
-                      Random Forest scores{" "}
-                      <strong className="font-semibold">High Risk</strong> (61%)
-                      — above the 60% threshold.
-                    </span>
+                    {/* Model bars with animated fills */}
+                    <div className="space-y-3 mb-5">
+                      {heroModels.map((m) => (
+                        <div key={m.name}>
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-[11px] font-medium text-ink-mid">{m.name}</span>
+                            <span className="font-mono text-xs font-bold" style={{ color: m.hex }}>{m.pct}%</span>
+                          </div>
+                          <div className="h-[6px] rounded-full bg-parchment-lo overflow-hidden">
+                            <div
+                              className="h-full rounded-full"
+                              style={{
+                                width: `${m.pct}%`,
+                                background: m.best
+                                  ? `linear-gradient(90deg, ${m.hex}, ${m.hex}cc)`
+                                  : `${m.hex}60`,
+                                transition: `width 1.2s ${EASE_DRAWER}`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Mini SHAP preview — inner bezel */}
+                    <div className="rounded-xl p-3.5 bg-parchment-hi border border-border/60">
+                      <p className="font-mono text-[9px] uppercase tracking-widest text-ink-ghost mb-2.5">Top SHAP contributors</p>
+                      <div className="space-y-1.5">
+                        {shapBars.slice(0, 3).map((b) => (
+                          <div key={b.label} className="flex items-center gap-2">
+                            <span className="text-[10px] text-ink-light w-20 shrink-0 truncate">{b.label}</span>
+                            <div className="flex-1 flex items-center">
+                              <div className="w-px h-3 bg-border shrink-0" />
+                              <div
+                                className="h-[3px] rounded-full ml-0.5"
+                                style={{
+                                  width: `${Math.abs(b.val) * 100}%`, maxWidth: "80%",
+                                  background: b.pos ? "#B23A3A" : "#4D7A60", opacity: 0.6,
+                                }}
+                              />
+                            </div>
+                            <span className="font-mono text-[10px] w-8 text-right" style={{ color: b.pos ? "#B23A3A" : "#4D7A60" }}>
+                              {b.pos ? "+" : ""}{b.val.toFixed(2)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
+            </TiltCard>
+          </div>
+
+          {/* Scroll indicator */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-40">
+            <div className="w-5 h-8 rounded-full border-2 border-ink-light flex items-start justify-center pt-1.5">
+              <div className="w-1 h-2 rounded-full bg-ink-light animate-bounce" />
             </div>
           </div>
         </section>
 
-        {/* ══════════════════════ STATS RIBBON ══════════════════════ */}
-        <section className="stats-section py-12 bg-white border-y border-border">
-          <div className="mx-auto max-w-5xl px-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        {/* ════════════════════ ANIMATED STATS RIBBON ════════════════════ */}
+        <section className="stats-row py-14 bg-white border-y border-border">
+          <div className="mx-auto max-w-6xl px-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-4">
               {[
-                { value: "4", suffix: "", label: "Disease modules" },
-                { value: "3", suffix: "", label: "ML models per run" },
-                { value: "100", suffix: "%", label: "SHAP-explainable" },
-                { value: "0", suffix: "", label: "Data stored w/o consent" },
+                { n: 4, s: "", l: "Diseases screened" },
+                { n: 3, s: "", l: "ML models per run" },
+                { n: 100, s: "%", l: "SHAP-explainable" },
+                { n: 0, s: "", l: "Data stored w/o consent" },
               ].map((s, i) => (
-                <div key={i} className="stat-item text-center">
-                  <div
-                    className="font-display italic font-medium leading-none mb-2 text-terra"
-                    style={{
-                      fontSize: "clamp(2.2rem, 4.5vw, 3.2rem)",
-                    }}
-                  >
-                    {s.value}
-                    <span className="text-[0.6em]">{s.suffix}</span>
+                <div key={i} className="stat-block text-center">
+                  <div className="font-display font-semibold text-terra leading-none mb-1.5" style={{ fontSize: "clamp(2.2rem, 4.5vw, 3rem)" }}>
+                    <AnimatedCounter end={s.n} suffix={s.s} />
                   </div>
-                  <div className="font-mono text-[11px] uppercase tracking-widest text-ink-light">
-                    {s.label}
-                  </div>
+                  <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-ink-light">{s.l}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* ══════════════════════ DISEASE MODULES ══════════════════════ */}
-        <section
-          id="diseases"
-          className="diseases-section py-24 px-6 bg-parchment"
-        >
+        {/* ════════════════════ DISEASE MODULES ════════════════════
+            Hallmark: 2x2 grid, not horizontal scroll.
+            High-end: Double-bezel cards, pill CTA reveal on hover.
+            Kowalski: 3D rotateX entrance, active:scale feedback.
+        ═══════════════════════════════════════════════════════════════ */}
+        <section id="screening" className="py-28 px-6 bg-parchment">
           <div className="mx-auto max-w-7xl">
-            <h2
-              className="section-heading font-display font-semibold leading-tight mb-12"
-              style={{ fontSize: "clamp(2rem, 4vw, 3rem)" }}
-            >
-              Four conditions.{" "}
-              <span className="text-ink-mid">Comprehensive screening.</span>
-            </h2>
+            <div className="s-head mb-16 max-w-2xl">
+              <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-terra mb-3">Screening Modules</p>
+              <h2 className="font-display font-semibold leading-tight" style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)" }}>
+                Four conditions. <span className="text-ink-mid">Three models each.</span>
+              </h2>
+              <p className="mt-4 text-base text-ink-mid leading-relaxed max-w-lg">
+                Each module uses a tailored feature set. Predictions are independent — screen one or all four.
+              </p>
+            </div>
 
-            {/* Horizontal scroll-snap container */}
-            <div
-              className="flex gap-5 overflow-x-auto snap-x snap-mandatory pb-4 -mx-6 px-6 scrollbar-hide"
-              style={{ scrollbarWidth: "none" }}
-            >
+            <div className="diseases-grid grid grid-cols-1 md:grid-cols-2 gap-5">
               {diseases.map((d) => {
                 const Icon = d.icon;
                 return (
-                  <div
-                    key={d.name}
-                    className="disease-card shrink-0 w-[300px] md:w-[320px] snap-start rounded-2xl bg-white border border-border overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-slow cursor-default"
+                  <Link
+                    key={d.key}
+                    to={`/predict/${d.key}`}
+                    className="d-card group block h-full"
+                    style={{ transformOrigin: "center bottom" }}
                   >
-                    {/* Accent top bar */}
-                    <div className="h-1" style={{ background: d.hex }} />
-
-                    <div className="p-6">
-                      {/* Icon + Name + Level */}
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="w-10 h-10 rounded-xl flex items-center justify-center"
-                            style={{ background: `${d.hex}15` }}
-                          >
-                            <Icon
-                              className="w-5 h-5"
-                              style={{ color: d.hex }}
-                            />
+                    {/* Double-bezel wrapper */}
+                    <div className="h-full rounded-[1.25rem] bg-ink/[0.02] border border-border/40 p-1 hover:border-border-strong hover:shadow-xl hover:shadow-ink/[0.05] transition-all duration-300" style={{ transitionTimingFunction: EASE_OUT_STRONG }}>
+                      <div className="h-full rounded-[calc(1.25rem-4px)] bg-white p-6 flex flex-col" style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)" }}>
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: `${d.hex}10` }}>
+                              <Icon className="w-5 h-5" style={{ color: d.hex }} />
+                            </div>
+                            <div>
+                              <h3 className="font-display text-lg font-semibold text-ink leading-tight group-hover:text-terra transition-colors duration-200">
+                                {d.name}
+                              </h3>
+                              <p className="text-[11px] text-ink-ghost font-mono">{d.tagline}</p>
+                            </div>
                           </div>
-                          <div>
-                            <h3 className="font-display text-lg font-semibold leading-tight text-ink">
-                              {d.name}
-                            </h3>
-                            <span className="font-mono text-[10px] text-ink-light">
-                              {d.inputs} inputs
+                          <span className="font-mono text-[10px] text-ink-ghost bg-parchment rounded-full px-2.5 py-1 border border-border/50">
+                            {d.inputs} inputs
+                          </span>
+                        </div>
+
+                        <p className="text-sm text-ink-mid leading-relaxed mb-5 flex-1">{d.desc}</p>
+
+                        {/* Feature pills */}
+                        <div className="flex flex-wrap gap-1.5 mb-4">
+                          {d.features.map((f) => (
+                            <span key={f} className="text-[10px] px-2.5 py-0.5 rounded-full border border-border/50 bg-parchment-hi text-ink-light">
+                              {f}
                             </span>
+                          ))}
+                        </div>
+
+                        {/* Hover CTA — slides up (Kowalski stagger entry) */}
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-terra opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-200" style={{ transitionTimingFunction: EASE_OUT_STRONG }}>
+                          Start screening
+                          <div className="w-5 h-5 rounded-full bg-terra/10 flex items-center justify-center">
+                            <ArrowRight className="w-3 h-3" />
                           </div>
                         </div>
-                        <span
-                          className="rounded-full px-2.5 py-0.5 text-[10px] font-mono font-semibold shrink-0"
-                          style={{
-                            background: `${d.levelHex}15`,
-                            color: d.levelHex,
-                          }}
-                        >
-                          {d.level}
-                        </span>
-                      </div>
-
-                      {/* Description */}
-                      <p className="text-sm leading-relaxed text-ink-mid mb-5">
-                        {d.desc}
-                      </p>
-
-                      {/* Risk gauge */}
-                      <div className="mb-5">
-                        <div className="flex justify-between items-center mb-1.5">
-                          <span className="font-mono text-[10px] uppercase tracking-widest text-ink-ghost">
-                            Sample risk
-                          </span>
-                          <span
-                            className="font-mono text-xs font-bold"
-                            style={{ color: d.levelHex }}
-                          >
-                            {d.riskPct}%
-                          </span>
-                        </div>
-                        <div className="relative h-2 rounded-full bg-parchment-lo overflow-hidden">
-                          <div
-                            className="risk-gauge-fill h-full rounded-full origin-left"
-                            style={{
-                              width: `${d.riskPct}%`,
-                              background: d.levelHex,
-                            }}
-                          />
-                          {/* 60% threshold tick */}
-                          <div
-                            className="absolute top-0 h-full w-px opacity-60 bg-ink-ghost"
-                            style={{ left: "60%" }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Divider */}
-                      <div className="border-t border-border-soft mb-4" />
-
-                      {/* Factor bars */}
-                      <div className="space-y-2.5">
-                        {d.factors.map((f) => (
-                          <div key={f.label}>
-                            <div className="flex justify-between mb-0.5">
-                              <span className="text-[11px] text-ink-light">
-                                {f.label}
-                              </span>
-                              <span className="font-mono text-[10px] text-ink-ghost">
-                                {f.w}%
-                              </span>
-                            </div>
-                            <div className="h-1 rounded-full bg-parchment-lo overflow-hidden">
-                              <div
-                                className="factor-bar h-full rounded-full origin-left"
-                                style={{
-                                  width: `${f.w}%`,
-                                  background: `${d.hex}50`,
-                                }}
-                              />
-                            </div>
-                          </div>
-                        ))}
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 );
               })}
             </div>
           </div>
         </section>
 
-        {/* ══════════════════════ HOW IT WORKS ══════════════════════ */}
-        <section
-          id="how-it-works"
-          className="steps-section py-24 px-6 bg-parchment-lo border-t border-border"
-        >
+        {/* ════════════════════ HOW IT WORKS ════════════════════ */}
+        <section id="how-it-works" className="py-28 px-6 bg-parchment-lo border-t border-border">
           <div className="mx-auto max-w-5xl">
-            <h2
-              className="section-heading font-display font-semibold mb-14"
-              style={{ fontSize: "clamp(2rem, 4vw, 3rem)" }}
-            >
-              From data to insight{" "}
-              <span className="text-ink-mid">in four steps.</span>
-            </h2>
+            <div className="s-head mb-16 max-w-xl">
+              <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-terra mb-3">Process</p>
+              <h2 className="font-display font-semibold leading-tight" style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)" }}>
+                From input to insight <span className="text-ink-mid">in four steps.</span>
+              </h2>
+            </div>
 
-            <div className="relative">
-              {/* Connector line */}
-              <div
-                className="step-line absolute left-[27px] top-8 bottom-8 w-0.5 hidden md:block"
-                style={{
-                  background:
-                    "linear-gradient(to bottom, #C25539, rgba(221,213,201,0.37))",
-                }}
-              />
+            <div className="steps-area relative">
+              {/* Connector */}
+              <div className="absolute left-[27px] top-8 bottom-8 w-0.5 hidden md:block bg-border">
+                <div className="step-line-fill w-full h-full bg-terra" />
+              </div>
 
               <div className="space-y-0">
-                {steps.map((step, i) => (
-                  <div
-                    key={step.num}
-                    className="step-item flex gap-7 items-start relative"
-                  >
-                    {/* Step circle */}
+                {[
+                  { n: "01", t: "Select a disease module", d: "Choose Diabetes, Heart Disease, TB, or Lung Cancer. Each has a tailored input form with field-level guidance." },
+                  { n: "02", t: "Enter your health data", d: "Input vitals and lifestyle indicators. All processing happens in-session — nothing stored without your explicit consent." },
+                  { n: "03", t: "Compare three model scores", d: "Logistic Regression, Random Forest, and XGBoost each score your risk independently. Disagreements are surfaced." },
+                  { n: "04", t: "Read the SHAP explanation", d: "A waterfall chart breaks down which factors pushed your score up or down, and by exactly how much." },
+                ].map((step, i) => (
+                  <div key={step.n} className="step-block flex gap-7 items-start relative">
                     <div
-                      className="shrink-0 w-14 h-14 rounded-full flex items-center justify-center z-10 border-2 transition-all"
+                      className="shrink-0 w-14 h-14 rounded-full flex items-center justify-center z-10 border-2 transition-all duration-300"
                       style={{
+                        transitionTimingFunction: EASE_OUT_STRONG,
                         background: i === 0 ? "#C25539" : "#fff",
                         color: i === 0 ? "#fff" : "#C25539",
                         borderColor: i === 0 ? "#C25539" : "#DDD5C9",
-                        boxShadow:
-                          i === 0
-                            ? "0 0 0 6px rgba(194,85,57,0.09)"
-                            : "none",
+                        boxShadow: i === 0 ? "0 0 0 6px rgba(194,85,57,0.08)" : "none",
                       }}
                     >
-                      <span className="font-mono text-sm font-bold">
-                        {step.num}
-                      </span>
+                      <span className="font-mono text-sm font-bold">{step.n}</span>
                     </div>
-
-                    {/* Step content */}
-                    <div className="pb-12 pt-2 flex-1">
-                      <h3 className="font-display text-xl font-semibold text-ink mb-2">
-                        {step.title}
-                      </h3>
-                      <p className="text-sm leading-relaxed text-ink-mid max-w-lg">
-                        {step.desc}
-                      </p>
+                    <div className="pb-14 pt-2 flex-1">
+                      <h3 className="font-display text-xl font-semibold text-ink mb-1.5">{step.t}</h3>
+                      <p className="text-sm leading-relaxed text-ink-mid max-w-md">{step.d}</p>
                     </div>
                   </div>
                 ))}
@@ -769,260 +744,168 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ══════════════════════ BENTO FEATURES ══════════════════════ */}
-        <section
-          id="features"
-          className="features-section py-24 px-6 bg-parchment border-t border-border"
-        >
+        {/* ════════════════════ BENTO FEATURES ════════════════════
+            High-end: Double-bezel on each cell, blur-in entry animation.
+            Hallmark: Asymmetric bento, full-width dark privacy row.
+        ═══════════════════════════════════════════════════════════════ */}
+        <section id="features" className="bento-area py-28 px-6 bg-parchment border-t border-border">
           <div className="mx-auto max-w-6xl">
-            {/* Section intro — Eyebrow #2 (of max 2) */}
-            <div className="mb-14">
-              <p className="font-mono text-xs uppercase tracking-widest text-terra mb-3">
-                Built different
-              </p>
-              <h2
-                className="section-heading font-display font-semibold"
-                style={{ fontSize: "clamp(2rem, 4vw, 3rem)" }}
-              >
+            <div className="s-head mb-16 max-w-xl">
+              <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-terra mb-3">Capabilities</p>
+              <h2 className="font-display font-semibold leading-tight" style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)" }}>
                 Designed for transparency.
               </h2>
-              <p className="mt-3 text-base max-w-xl text-ink-mid leading-relaxed">
-                Every design decision traces back to one principle: you should
-                always know why the model said what it said.
+              <p className="mt-4 text-base text-ink-mid leading-relaxed max-w-lg">
+                Every design decision traces back to one principle: you should always know <em className="font-display">why</em> the model said what it said.
               </p>
             </div>
 
-            {/* Bento grid — asymmetric */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {/* ── SHAP Explainability — tall, row-span-2 ── */}
-              <div
-                className="bento-cell md:row-span-2 rounded-2xl p-7 bg-white border border-border flex flex-col"
-                style={{ minHeight: 440 }}
-              >
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4 bg-terra-dim">
-                  <Brain className="w-5 h-5 text-terra" />
-                </div>
-                <h3 className="font-display text-xl font-semibold text-ink mb-2">
-                  SHAP Explainability
-                </h3>
-                <p className="text-sm leading-relaxed text-ink-mid mb-6">
-                  Every prediction comes with a waterfall chart showing which
-                  factors pushed your score up or down.
-                </p>
-
-                {/* Mini SHAP waterfall */}
-                <div className="flex-1 rounded-xl p-4 bg-parchment-hi border border-border">
-                  <div className="font-mono text-[10px] uppercase tracking-widest text-ink-ghost mb-3">
-                    Feature attribution — Heart Disease
-                  </div>
-                  <div className="space-y-2.5">
-                    {shapBars.map((b) => (
-                      <div key={b.label}>
-                        <div className="flex justify-between mb-0.5">
-                          <span className="text-[11px] font-medium text-ink-mid">
-                            {b.label}
-                          </span>
-                          <span
-                            className="font-mono text-[11px]"
-                            style={{
-                              color: b.pos ? "#B23A3A" : "#4D7A60",
-                            }}
-                          >
-                            {b.pos ? "+" : ""}
-                            {b.val.toFixed(2)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          {/* Negative bar (grows right-to-left) */}
-                          {!b.pos && (
-                            <div className="flex-1 flex justify-end">
-                              <div
-                                className="shap-bar-fill h-1.5 rounded-full origin-right"
-                                style={{
-                                  width: `${Math.abs(b.val) * 170}px`,
-                                  maxWidth: "100%",
-                                  background: "#4D7A60",
-                                  opacity: 0.65,
-                                }}
-                              />
-                            </div>
-                          )}
-                          {/* Center axis */}
-                          <div className="w-px h-3.5 shrink-0 bg-border" />
-                          {/* Positive bar (grows left-to-right) */}
-                          {b.pos && (
-                            <div className="flex-1">
-                              <div
-                                className="shap-bar-fill h-1.5 rounded-full origin-left"
-                                style={{
-                                  width: `${Math.abs(b.val) * 170}px`,
-                                  maxWidth: "100%",
-                                  background: "#B23A3A",
-                                  opacity: 0.7,
-                                }}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex justify-between mt-3">
-                    <span className="font-mono text-[9px] text-status-low">
-                      ← Decreases risk
-                    </span>
-                    <span className="font-mono text-[9px] text-status-high">
-                      Increases risk →
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* ── Multi-Model Comparison — wide ── */}
-              <div className="bento-cell md:col-span-2 rounded-2xl p-7 bg-white border border-border">
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
-                  style={{ background: "#8B5D6B15" }}
-                >
-                  <Layers className="w-5 h-5" style={{ color: "#8B5D6B" }} />
-                </div>
-                <h3 className="font-display text-xl font-semibold text-ink mb-2">
-                  Multi-Model Comparison
-                </h3>
-                <p className="text-sm leading-relaxed text-ink-mid mb-5">
-                  Three algorithms run simultaneously. Disagreements near the
-                  threshold are the most informative moments.
-                </p>
-                <div className="space-y-2.5">
-                  {[
-                    { name: "Logistic Regression", pct: 38, hex: "#5B7C99" },
-                    { name: "Random Forest", pct: 61, hex: "#8B5D6B" },
-                    { name: "XGBoost", pct: 57, hex: "#A68A4E" },
-                  ].map((m) => (
-                    <div key={m.name} className="flex items-center gap-3">
-                      <span className="text-[11px] font-mono w-32 shrink-0 text-ink-light">
-                        {m.name}
-                      </span>
-                      <div className="flex-1 h-1.5 rounded-full bg-parchment-lo overflow-hidden">
-                        <div
-                          className="h-full rounded-full"
-                          style={{
-                            width: `${m.pct}%`,
-                            background: m.hex,
-                          }}
-                        />
-                      </div>
-                      <span
-                        className="font-mono text-xs font-semibold w-8 text-right shrink-0"
-                        style={{ color: m.hex }}
-                      >
-                        {m.pct}%
-                      </span>
+              {/* SHAP — tall, row-span-2 */}
+              <div className="bento-item md:row-span-2">
+                <div className="h-full rounded-[1.25rem] bg-ink/[0.02] border border-border/40 p-1">
+                  <div className="h-full rounded-[calc(1.25rem-4px)] bg-white p-7 flex flex-col" style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)", minHeight: 420 }}>
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4 bg-terra-dim">
+                      <Brain className="w-5 h-5 text-terra" />
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* ── Personal Risk History — wide ── */}
-              <div className="bento-cell md:col-span-2 rounded-2xl p-7 bg-white border border-border">
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
-                  style={{ background: "#A68A4E15" }}
-                >
-                  <TrendingUp
-                    className="w-5 h-5"
-                    style={{ color: "#A68A4E" }}
-                  />
-                </div>
-                <h3 className="font-display text-xl font-semibold text-ink mb-2">
-                  Personal Risk History
-                </h3>
-                <p className="text-sm leading-relaxed text-ink-mid mb-5">
-                  Every saved prediction builds your risk timeline. See how your
-                  score moves as your inputs change.
-                </p>
-                <div className="rounded-xl px-4 py-3 bg-parchment-hi border border-border">
-                  <div className="font-mono text-[10px] uppercase tracking-widest text-ink-ghost mb-2">
-                    Diabetes risk — last 6 months
-                  </div>
-                  <svg
-                    viewBox="0 0 260 64"
-                    className="w-full"
-                    style={{ height: 56 }}
-                    aria-label="Sparkline showing diabetes risk trend declining over 6 months"
-                  >
-                    <path
-                      className="spark-path"
-                      d="M0,48 L44,42 L88,36 L132,30 L176,24 L220,18 L260,14"
-                      fill="none"
-                      stroke="#4D7A60"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeDasharray="300"
-                      strokeDashoffset="0"
-                    />
-                    {[0, 44, 88, 132, 176, 220, 260].map((x, i) => {
-                      const ys = [48, 42, 36, 30, 24, 18, 14];
-                      return (
-                        <circle
-                          key={x}
-                          cx={x}
-                          cy={ys[i]}
-                          r="3"
-                          fill="#4D7A60"
-                          opacity="0.6"
-                        />
-                      );
-                    })}
-                  </svg>
-                  <div className="flex justify-between">
-                    <span className="font-mono text-[9px] text-ink-ghost">
-                      Jan
-                    </span>
-                    <span className="font-mono text-[9px] text-ink-ghost">
-                      Jun
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* ── Private by Design — full-width dark ── */}
-              <div className="bento-cell md:col-span-3 rounded-2xl p-7 bg-ink">
-                <div className="flex flex-col md:flex-row md:items-center gap-7">
-                  <div className="flex-1">
-                    <div
-                      className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
-                      style={{ background: "rgba(255,255,255,0.08)" }}
-                    >
-                      <Lock className="w-5 h-5 text-parchment" />
-                    </div>
-                    <h3 className="font-display text-xl font-semibold text-parchment-hi mb-2">
-                      Private by Design
-                    </h3>
-                    <p className="text-sm leading-relaxed text-ink-ghost">
-                      Nothing is stored without explicit consent. Delete
-                      individual records or your entire account — permanently.
+                    <h3 className="font-display text-xl font-semibold text-ink mb-2">SHAP Explainability</h3>
+                    <p className="text-sm leading-relaxed text-ink-mid mb-6">
+                      Every prediction includes a waterfall chart showing which factors pushed your score up or down.
                     </p>
-                  </div>
-                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {[
-                      "Explicit consent before saving",
-                      "Passwords hashed, never plaintext",
-                      "Short-lived access tokens",
-                      "Permanent deletion, no soft-deletes",
-                    ].map((item) => (
-                      <div
-                        key={item}
-                        className="flex items-center gap-2.5 rounded-lg px-3.5 py-2.5"
-                        style={{
-                          background: "rgba(255,255,255,0.05)",
-                          border: "1px solid rgba(255,255,255,0.08)",
-                        }}
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-status-low" />
-                        <span className="text-xs text-ink-ghost">{item}</span>
+                    {/* SHAP waterfall */}
+                    <div className="flex-1 rounded-xl p-4 bg-parchment-hi border border-border/60">
+                      <p className="font-mono text-[9px] uppercase tracking-widest text-ink-ghost mb-3">Feature Attribution</p>
+                      <div className="space-y-2.5">
+                        {shapBars.map((b) => (
+                          <div key={b.label}>
+                            <div className="flex justify-between mb-0.5">
+                              <span className="text-[11px] font-medium text-ink-mid">{b.label}</span>
+                              <span className="font-mono text-[11px]" style={{ color: b.pos ? "#B23A3A" : "#4D7A60" }}>
+                                {b.pos ? "+" : ""}{b.val.toFixed(2)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              {!b.pos && (
+                                <div className="flex-1 flex justify-end">
+                                  <div className="shap-fill h-1.5 rounded-full origin-right" style={{ width: `${Math.abs(b.val) * 170}px`, maxWidth: "100%", background: "#4D7A60", opacity: 0.55 }} />
+                                </div>
+                              )}
+                              <div className="w-px h-3.5 shrink-0 bg-border" />
+                              {b.pos && (
+                                <div className="flex-1">
+                                  <div className="shap-fill h-1.5 rounded-full origin-left" style={{ width: `${Math.abs(b.val) * 170}px`, maxWidth: "100%", background: "#B23A3A", opacity: 0.6 }} />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                      <div className="flex justify-between mt-3">
+                        <span className="font-mono text-[8px] text-sage">&larr; Lowers risk</span>
+                        <span className="font-mono text-[8px] text-status-high">Raises risk &rarr;</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Multi-Model — wide */}
+              <div className="bento-item md:col-span-2">
+                <div className="h-full rounded-[1.25rem] bg-ink/[0.02] border border-border/40 p-1">
+                  <div className="h-full rounded-[calc(1.25rem-4px)] bg-white p-7" style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)" }}>
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4" style={{ background: "#8B5D6B10" }}>
+                      <Layers className="w-5 h-5" style={{ color: "#8B5D6B" }} />
+                    </div>
+                    <h3 className="font-display text-xl font-semibold text-ink mb-2">Multi-Model Comparison</h3>
+                    <p className="text-sm leading-relaxed text-ink-mid mb-5">
+                      Three algorithms run simultaneously. Disagreements near the threshold are the most informative.
+                    </p>
+                    <div className="space-y-2.5">
+                      {heroModels.map((m) => (
+                        <div key={m.name} className="flex items-center gap-3">
+                          <span className="text-[11px] font-mono w-32 shrink-0 text-ink-light">{m.name}</span>
+                          <div className="flex-1 h-[5px] rounded-full bg-parchment-lo overflow-hidden">
+                            <div className="h-full rounded-full" style={{ width: `${m.pct}%`, background: m.hex }} />
+                          </div>
+                          <span className="font-mono text-xs font-bold w-8 text-right shrink-0" style={{ color: m.hex }}>{m.pct}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Risk Timeline — wide */}
+              <div className="bento-item md:col-span-2">
+                <div className="h-full rounded-[1.25rem] bg-ink/[0.02] border border-border/40 p-1">
+                  <div className="h-full rounded-[calc(1.25rem-4px)] bg-white p-7" style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)" }}>
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4" style={{ background: "#A68A4E10" }}>
+                      <TrendingUp className="w-5 h-5" style={{ color: "#A68A4E" }} />
+                    </div>
+                    <h3 className="font-display text-xl font-semibold text-ink mb-2">Personal Risk History</h3>
+                    <p className="text-sm leading-relaxed text-ink-mid mb-5">
+                      Every saved prediction builds your risk timeline. Track how your score moves as inputs change.
+                    </p>
+                    <div className="rounded-xl px-4 py-3 bg-parchment-hi border border-border/60">
+                      <p className="font-mono text-[9px] uppercase tracking-widest text-ink-ghost mb-2">Diabetes risk — last 6 months</p>
+                      <svg viewBox="0 0 260 64" className="w-full" style={{ height: 52 }} aria-label="Risk trend sparkline">
+                        <path
+                          className="spark-line"
+                          d="M0,48 C22,46 33,44 44,42 C55,40 66,38 88,36 C110,34 121,32 132,30 C143,28 154,26 176,24 C198,22 209,20 220,18 C231,16 245,15 260,14"
+                          fill="none" stroke="#4D7A60" strokeWidth="2" strokeLinecap="round"
+                          strokeDasharray="300" strokeDashoffset="0"
+                        />
+                        {/* Gradient area fill */}
+                        <path
+                          d="M0,48 C22,46 33,44 44,42 C55,40 66,38 88,36 C110,34 121,32 132,30 C143,28 154,26 176,24 C198,22 209,20 220,18 C231,16 245,15 260,14 L260,64 L0,64 Z"
+                          fill="url(#sparkGrad)" opacity="0.15"
+                        />
+                        <defs>
+                          <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#4D7A60" />
+                            <stop offset="100%" stopColor="#4D7A60" stopOpacity="0" />
+                          </linearGradient>
+                        </defs>
+                        {[0,44,88,132,176,220,260].map((x, i) => {
+                          const ys = [48,42,36,30,24,18,14];
+                          return <circle key={x} cx={x} cy={ys[i]} r="2.5" fill="#4D7A60" opacity="0.5" />;
+                        })}
+                      </svg>
+                      <div className="flex justify-between">
+                        <span className="font-mono text-[9px] text-ink-ghost">Jan</span>
+                        <span className="font-mono text-[9px] text-ink-ghost">Jun</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Privacy — full dark row */}
+              <div className="bento-item md:col-span-3">
+                <div className="rounded-[1.25rem] bg-ink p-7">
+                  <div className="flex flex-col md:flex-row md:items-center gap-8">
+                    <div className="flex-1">
+                      <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4" style={{ background: "rgba(255,255,255,0.06)" }}>
+                        <Lock className="w-5 h-5 text-parchment" />
+                      </div>
+                      <h3 className="font-display text-xl font-semibold text-parchment-hi mb-2">Private by Design</h3>
+                      <p className="text-sm leading-relaxed text-ink-ghost max-w-md">
+                        Nothing is stored without explicit consent. Delete individual records or your entire account — permanently, immediately.
+                      </p>
+                    </div>
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {[
+                        "Explicit consent before saving",
+                        "Passwords hashed, never plaintext",
+                        "Short-lived access tokens",
+                        "Permanent deletion on request",
+                      ].map((item) => (
+                        <div key={item} className="flex items-center gap-2.5 rounded-lg px-3.5 py-2.5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-sage" />
+                          <span className="text-xs text-ink-ghost">{item}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1030,44 +913,34 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ══════════════════════ TRUST ══════════════════════ */}
-        <section className="trust-section py-24 px-6 bg-parchment-lo border-t border-border">
+        {/* ════════════════════ TRUST ════════════════════ */}
+        <section className="trust-area py-28 px-6 bg-parchment-lo border-t border-border">
           <div className="mx-auto max-w-5xl">
-            <div className="grid lg:grid-cols-2 gap-14 items-start">
-              {/* Left — headline */}
-              <div>
-                <h2
-                  className="section-heading font-display font-semibold mb-5"
-                  style={{ fontSize: "clamp(2rem, 4vw, 3rem)" }}
-                >
-                  Private by design.{" "}
-                  <span className="text-ink-mid">
-                    Transparent by default.
-                  </span>
+            <div className="grid lg:grid-cols-2 gap-16 items-start">
+              <div className="s-head">
+                <h2 className="font-display font-semibold mb-5 leading-tight" style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)" }}>
+                  Built for trust. <span className="text-ink-mid">Not for data collection.</span>
                 </h2>
-                <p className="text-base leading-relaxed text-ink-mid mb-5">
-                  The data layer assumes everything you enter is personal —
-                  because it is. No health data is stored without explicit,
-                  logged consent.
+                <p className="text-base leading-relaxed text-ink-mid mb-4">
+                  The data layer assumes everything you enter is personal — because it is.
+                  No health data is stored without explicit, logged consent.
                 </p>
                 <p className="text-base leading-relaxed text-ink-mid">
-                  Delete individual predictions, all history, or your entire
-                  account. Deletion is permanent and immediate.
+                  Delete individual predictions, all history, or your entire account.
+                  Deletion is permanent and immediate.
                 </p>
               </div>
-
-              {/* Right — trust items */}
               <div className="space-y-2.5">
-                {trustItems.map(({ icon: Icon, text }, i) => (
-                  <div
-                    key={i}
-                    className="trust-item flex items-center gap-3.5 rounded-xl px-5 py-3.5 bg-white border border-border"
-                  >
-                    <div
-                      className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ background: "rgba(77,122,96,0.08)" }}
-                    >
-                      <Icon className="w-4 h-4 text-status-low" />
+                {[
+                  { icon: ShieldCheck, text: "Explicit consent required before any prediction is saved" },
+                  { icon: Lock, text: "Passwords hashed server-side — never stored in plaintext" },
+                  { icon: Zap, text: "Short-lived access tokens with automatic rotation" },
+                  { icon: CheckCircle2, text: "Permanent deletion — no soft-deletes or hidden retention" },
+                  { icon: Activity, text: "Per-user data isolation — zero cross-account leakage" },
+                ].map(({ icon: I, text }, i) => (
+                  <div key={i} className="trust-pill flex items-center gap-3.5 rounded-xl px-5 py-4 bg-white border border-border/60 hover:border-border-strong hover:shadow-md hover:shadow-ink/[0.03] transition-all duration-200" style={{ transitionTimingFunction: EASE_OUT_STRONG }}>
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "rgba(77,122,96,0.07)" }}>
+                      <I className="w-4 h-4 text-sage" />
                     </div>
                     <span className="text-sm text-ink-mid">{text}</span>
                   </div>
@@ -1077,69 +950,55 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ══════════════════════ CTA ══════════════════════ */}
-        <section className="cta-section py-32 px-6 relative overflow-hidden bg-ink">
-          {/* Ambient blobs */}
-          <div className="pointer-events-none absolute -top-24 -right-24 w-[400px] h-[400px] rounded-full blur-[100px] opacity-[0.15] bg-terra" />
-          <div
-            className="pointer-events-none absolute -bottom-24 -left-24 w-[300px] h-[300px] rounded-full blur-[100px] opacity-[0.10]"
-            style={{ background: "#5B7C99" }}
-          />
+        {/* ════════════════════ CTA ════════════════════ */}
+        <section className="cta-area py-36 px-6 relative overflow-hidden bg-ink">
+          <div className="pointer-events-none absolute -top-24 -right-24 w-[400px] h-[400px] rounded-full opacity-[0.10]" style={{ background: "radial-gradient(circle, #C25539 0%, transparent 70%)" }} />
+          <div className="pointer-events-none absolute -bottom-24 -left-24 w-[300px] h-[300px] rounded-full opacity-[0.06]" style={{ background: "radial-gradient(circle, #5B7C99 0%, transparent 70%)" }} />
 
-          <div className="cta-inner relative mx-auto max-w-2xl text-center">
-            <h2
-              className="font-display font-semibold mb-5 leading-tight text-parchment-hi"
-              style={{ fontSize: "clamp(2rem, 5vw, 3.2rem)" }}
-            >
-              Start your risk assessment today.
+          <div className="cta-box relative mx-auto max-w-2xl text-center">
+            <h2 className="font-display font-semibold mb-5 leading-tight text-parchment-hi" style={{ fontSize: "clamp(1.8rem, 4.5vw, 3rem)" }}>
+              Start your first screening.
             </h2>
-            <p className="text-base mb-9 leading-relaxed text-ink-ghost">
-              No credit card required. Create an account, run your first
-              prediction, and see exactly why the model scored you the way it
-              did.
+            <p className="text-base mb-9 leading-relaxed text-ink-ghost max-w-md mx-auto">
+              No account required for your first prediction. Choose a disease, enter your data,
+              and see exactly why the model scored you the way it did.
             </p>
-            <Link to="/signup">
+            <Link to="/predict/diabetes">
               <button
-                className="inline-flex items-center gap-2.5 px-9 py-4 rounded-xl text-base font-semibold bg-terra text-white hover:opacity-90 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 group"
+                className="group inline-flex items-center gap-3 pl-8 pr-2.5 py-2.5 rounded-full text-base font-semibold bg-terra text-white active:scale-[0.97] transition-all duration-200"
                 style={{
-                  boxShadow: "0 8px 32px rgba(194,85,57,0.35)",
+                  transitionTimingFunction: EASE_OUT_STRONG,
+                  boxShadow: "0 8px 32px rgba(194,85,57,0.3), 0 0 0 1px rgba(194,85,57,0.5)",
                 }}
               >
-                Start Free Assessment
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-base" />
+                Run Prediction
+                <span className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 group-hover:translate-x-0.5 transition-all duration-200">
+                  <ArrowRight className="w-4.5 h-4.5" />
+                </span>
               </button>
             </Link>
-            <p className="mt-5 font-mono text-[11px] text-ink-ghost/50">
-              Educational tool only — not a medical diagnosis.
+            <p className="mt-6 font-mono text-[10px] text-ink-ghost/40">
+              Educational screening tool — not a medical diagnosis.
             </p>
           </div>
         </section>
       </main>
 
-      {/* ══════════════════════ FOOTER ══════════════════════ */}
+      {/* ════════════════════ FOOTER ════════════════════ */}
       <footer className="py-8 px-6 border-t border-border bg-parchment">
         <div className="mx-auto max-w-6xl flex flex-col md:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <img
-              src="/new_logo.svg"
-              alt="TraceHealth logo"
-              className="h-9 w-9 rounded-xl object-contain"
-            />
-            <span className="font-display text-xl font-medium bg-gradient-to-r from-[#141314] via-[#733B24] to-[#C95A2D] text-transparent bg-clip-text">
+            <img src="/new_logo.svg" alt="TraceHealth" className="h-8 w-8 rounded-xl object-contain" />
+            <span className="font-display text-lg font-medium bg-gradient-to-r from-ink via-[#733B24] to-terra text-transparent bg-clip-text">
               TraceHealth
             </span>
           </div>
-          <p className="font-mono text-[11px] text-center text-ink-light">
+          <p className="font-mono text-[10px] text-center text-ink-light">
             Educational tool only — not a medical diagnosis.
           </p>
           <div className="flex items-center gap-4">
-            <p className="font-mono text-[11px] text-ink-ghost">
-              © {new Date().getFullYear()} TraceHealth
-            </p>
-            <Link
-              to="/admin/login"
-              className="font-mono text-[11px] text-ink-ghost hover:text-terra transition-colors"
-            >
+            <p className="font-mono text-[10px] text-ink-ghost">&copy; {new Date().getFullYear()} TraceHealth</p>
+            <Link to="/admin/login" className="font-mono text-[10px] text-ink-ghost hover:text-terra transition-colors duration-200">
               Admin
             </Link>
           </div>
