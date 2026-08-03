@@ -339,13 +339,14 @@ export default function Uploads() {
   const hasNext = skip + PAGE_SIZE < total;
 
   return (
-    <div className="flex min-h-screen bg-parchment">
+    <div className="page-shell">
       <Sidebar />
 
-      <main className="flex-1 p-8">
-        <header className="mb-8">
-          <p className="text-xs font-mono tracking-widest text-ink-ghost uppercase mb-2">Medical Documents</p>
-          <h1 className="font-serif text-3xl text-ink mb-2">Uploads</h1>
+      <main className="page-main bg-parchment">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <header className="mb-6 sm:mb-8 animate-fade-up">
+          <p className="text-[10px] font-mono tracking-widest text-ink-ghost uppercase mb-2">Medical Documents</p>
+          <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink mb-2">Uploads</h1>
           <p className="text-ink-light text-sm">
             Securely store and analyze medical reports, scans, and lab results.{" "}
             {total > 0 && <span className="text-ink-mid font-medium">{total} file{total !== 1 ? "s" : ""}</span>}
@@ -358,8 +359,9 @@ export default function Uploads() {
           onDragLeave={onDragLeave}
           onDrop={onDrop}
           onClick={() => inputRef.current?.click()}
-          className={`mb-6 rounded-2xl border-2 border-dashed cursor-pointer transition-all duration-200 p-10 text-center
+          className={`mb-5 sm:mb-6 rounded-2xl border-2 border-dashed cursor-pointer transition-all p-6 sm:p-10 text-center active:scale-[0.99] animate-fade-up
             ${dragging ? "border-terra bg-terra-dim scale-[1.01]" : "border-border hover:border-terra hover:bg-terra-dim"}`}
+          style={{ transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)", transitionDuration: "200ms", animationDelay: "50ms" }}
         >
           <input
             ref={inputRef}
@@ -579,6 +581,7 @@ export default function Uploads() {
           Allowed formats: {ALLOWED_EXT_LABEL}. Maximum file size: {MAX_MB} MB.
           AI analysis is performed in real-time and no report data is retained after analysis.
         </p>
+        </div>
       </main>
 
       {/* Analysis result panel */}

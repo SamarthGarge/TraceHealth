@@ -95,34 +95,36 @@ export default function Export() {
   }
 
   return (
-    <div className="flex min-h-screen bg-parchment">
+    <div className="page-shell">
       <Sidebar />
 
-      <main className="flex-1 p-8 max-w-3xl">
+      <main className="page-main bg-parchment">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Header */}
-        <header className="mb-8">
-          <p className="text-xs font-mono tracking-widest text-ink-ghost uppercase mb-2">
+        <header className="mb-6 sm:mb-8 animate-fade-up">
+          <p className="text-[10px] font-mono tracking-widest text-ink-ghost uppercase mb-2">
             Data Portability
           </p>
-          <h1 className="font-serif text-3xl text-ink mb-2">Export Data</h1>
+          <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink mb-2">Export Data</h1>
           <p className="text-ink-light text-sm">
             Download your prediction history in your preferred format. Your data belongs to you.
           </p>
         </header>
 
         {/* Format selector */}
-        <div className="mb-6">
-          <p className="text-xs font-semibold text-ink-mid mb-3">Export format</p>
-          <div className="grid grid-cols-2 gap-3">
+        <div className="mb-5 sm:mb-6 animate-fade-up" style={{ animationDelay: "50ms" }}>
+          <p className="text-[11px] font-semibold text-ink-mid mb-3 uppercase tracking-wider font-mono">Export format</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {FORMAT_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => setFormat(opt.value)}
-                className={`flex flex-col items-start gap-2 p-4 rounded-xl border text-left transition-all
+                className={`flex flex-col items-start gap-2 p-4 rounded-xl border text-left transition-all active:scale-[0.98]
                   ${format === opt.value
-                    ? "border-terra bg-terra-dim"
+                    ? "border-terra bg-terra-dim shadow-sm"
                     : "border-border bg-white hover:border-border-strong"
                   }`}
+                style={{ transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)", transitionDuration: "200ms" }}
               >
                 <span style={{ color: format === opt.value ? "var(--terra)" : "var(--ink-ghost)" }}>
                   {opt.icon}
@@ -139,15 +141,14 @@ export default function Export() {
         </div>
 
         {/* Disease filter */}
-        <div className="mb-8">
-          <label className="text-xs font-semibold text-ink-mid block mb-2">
+        <div className="mb-6 sm:mb-8 animate-fade-up" style={{ animationDelay: "100ms" }}>
+          <label className="text-[11px] font-semibold text-ink-mid block mb-2 uppercase tracking-wider font-mono">
             Filter by disease
           </label>
           <select
             value={disease}
             onChange={(e) => setDisease(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg border border-border bg-white text-sm text-ink
-              focus:outline-none focus:ring-2 focus:ring-terra focus:border-transparent transition"
+            className="input w-full"
           >
             {DISEASE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -156,8 +157,8 @@ export default function Export() {
         </div>
 
         {/* What's included */}
-        <div className="bg-white border border-border rounded-xl p-5 mb-6">
-          <p className="text-xs font-semibold text-ink-mid mb-3">What's included</p>
+        <div className="card mb-5 sm:mb-6 animate-fade-up" style={{ animationDelay: "150ms" }}>
+          <p className="text-[11px] font-semibold text-ink-mid mb-3 uppercase tracking-wider font-mono">What's included</p>
           <ul className="space-y-2">
             {[
               "Prediction date and disease type",
@@ -203,8 +204,10 @@ export default function Export() {
         <button
           onClick={handleExport}
           disabled={loading}
-          className="flex items-center gap-2 px-6 py-3 rounded-lg bg-terra text-white text-sm font-semibold
-            hover:bg-terra-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-terra text-white text-sm font-semibold
+            hover:bg-terra-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed
+            shadow-sm shadow-terra/20 hover:shadow-md hover:shadow-terra/25 active:scale-[0.97]"
+          style={{ transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)", transitionDuration: "200ms" }}
         >
           {loading ? (
             <>
@@ -226,6 +229,7 @@ export default function Export() {
           Your data is exported directly from your account and is not shared with any third party.
           Only predictions saved with your consent are included.
         </p>
+        </div>
       </main>
     </div>
   );

@@ -1,19 +1,36 @@
-import React, { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { NavLink, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, createContext, useContext } from "react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 /**
- * Sidebar — DataLens dark-ink navigation panel.
- * Visible on authenticated pages (desktop: fixed left rail, mobile: hidden).
- * Disease nav dots use categorical chart colors (--chart-clay, --chart-plum, etc.)
- *
- * Layout:
- *   - App logo / brand
- *   - Primary nav (Dashboard, Predict disease links, History, Uploads, Symptom Check)
- *   - Secondary nav (Resources, About Models, Export, Admin if admin role)
- *   - Bottom: Profile link + Sign out
+ * Mobile drawer context — shared between Sidebar and Header.
+ * Header renders a hamburger that toggles Sidebar's mobile drawer.
  */
+const DrawerContext = createContext({ open: false, setOpen: () => {} });
+export function useDrawer() { return useContext(DrawerContext); }
+
+export function DrawerProvider({ children }) {
+  const [open, setOpen] = useState(false);
+  const location = useLocation();
+
+  // Close drawer on route change
+  useEffect(() => { setOpen(false); }, [location.pathname]);
+
+  // Prevent scroll when drawer is open
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
+  return (
+    <DrawerContext.Provider value={{ open, setOpen }}>
+      {children}
+    </DrawerContext.Provider>
+  );
+}
+
+/* ── Navigation data ──────────────────────────────────────────────────────── */
 
 const DISEASE_NAV = [
   { to: "/predict/diabetes",    label: "Diabetes",      dot: "var(--chart-clay)" },
@@ -91,20 +108,26 @@ const SECONDARY_NAV = [
   },
 ];
 
-function NavItem({ to, label, icon, collapsed }) {
+const EASE = "cubic-bezier(0.23, 1, 0.32, 1)";
+
+/* ── NavItem ──────────────────────────────────────────────────────────────── */
+
+function NavItem({ to, label, icon, collapsed, onClick }) {
   return (
     <NavLink
       to={to}
       title={collapsed ? label : undefined}
+      onClick={onClick}
       className={({ isActive }) =>
-        `flex items-center gap-3 py-2 rounded-lg text-sm transition-colors ${
+        `flex items-center gap-3 py-2.5 rounded-lg text-[13px] transition-all ${
           collapsed ? "px-0 justify-center" : "px-3"
         } ${
           isActive
-            ? "bg-white/10 text-white font-medium"
-            : "text-ink-ghost hover:text-white hover:bg-white/5"
+            ? "bg-white/10 text-white font-medium shadow-sm shadow-white/5"
+            : "text-white/55 hover:text-white hover:bg-white/[0.06]"
         }`
       }
+      style={{ transitionTimingFunction: EASE, transitionDuration: "200ms" }}
     >
       <div className="shrink-0 flex items-center justify-center w-5 h-5">{icon}</div>
       {!collapsed && <span className="truncate">{label}</span>}
@@ -112,29 +135,23 @@ function NavItem({ to, label, icon, collapsed }) {
   );
 }
 
-export default function Sidebar() {
+/* ── Sidebar content (shared between desktop and mobile drawer) ──────────── */
+
+function SidebarContent({ collapsed, toggleSidebar, onNavClick, showToggle = true }) {
   const { user, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
-  
-  const [collapsed, setCollapsed] = useState(() => {
-    return localStorage.getItem("sidebar_collapsed") === "true";
-  });
-
-  const toggleSidebar = () => {
-    setCollapsed(prev => {
-      const next = !prev;
-      localStorage.setItem("sidebar_collapsed", next.toString());
-      return next;
-    });
-  };
 
   async function handleLogout() {
     await logout();
     navigate("/", { replace: true });
   }
 
+  const initials = user?.name
+    ? user.name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()
+    : "U";
+
   return (
-    <aside className={`hidden md:flex flex-col shrink-0 min-h-screen bg-ink py-5 transition-all duration-300 ease-in-out ${collapsed ? "w-16 px-2" : "w-56 px-3"}`}>
+    <>
       {/* Brand & Toggle */}
       <div className={`flex items-center mb-8 ${collapsed ? "flex-col gap-4 px-1" : "justify-between px-3"}`}>
         <div className={`flex items-center gap-2.5 ${collapsed ? "justify-center" : ""}`}>
@@ -145,26 +162,29 @@ export default function Sidebar() {
           />
           {!collapsed && <span className="font-serif text-lg leading-none truncate bg-gradient-to-r from-[#D65F2E] to-[#924728] text-transparent bg-clip-text">TraceHealth</span>}
         </div>
-        <button 
-          onClick={toggleSidebar}
-          className="p-1 rounded-md text-ink-ghost hover:text-white hover:bg-white/10 transition-colors"
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        </button>
+        {showToggle && (
+          <button
+            onClick={toggleSidebar}
+            className="p-1.5 rounded-md text-white/40 hover:text-white hover:bg-white/10 transition-all active:scale-[0.92]"
+            style={{ transitionTimingFunction: EASE, transitionDuration: "200ms" }}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
+        )}
       </div>
 
       {/* Primary nav */}
       <nav className="space-y-0.5" aria-label="Primary navigation">
         {PRIMARY_NAV.map((item) => (
-          <NavItem key={item.to} {...item} collapsed={collapsed} />
+          <NavItem key={item.to} {...item} collapsed={collapsed} onClick={onNavClick} />
         ))}
       </nav>
 
       {/* Disease predict links */}
       <div className="mt-6">
         {!collapsed ? (
-          <p className="px-3 mb-2 text-[10px] font-mono tracking-widest text-ink-light uppercase truncate">
+          <p className="px-3 mb-2 text-[10px] font-mono tracking-widest text-white/30 uppercase truncate">
             Predict
           </p>
         ) : (
@@ -176,15 +196,17 @@ export default function Sidebar() {
               key={to}
               to={to}
               title={collapsed ? label : undefined}
+              onClick={onNavClick}
               className={({ isActive }) =>
-                `flex items-center gap-3 py-2 rounded-lg text-sm transition-colors ${
+                `flex items-center gap-3 py-2.5 rounded-lg text-[13px] transition-all ${
                   collapsed ? "px-0 justify-center" : "px-3"
                 } ${
                   isActive
                     ? "bg-white/10 text-white font-medium"
-                    : "text-ink-ghost hover:text-white hover:bg-white/5"
+                    : "text-white/55 hover:text-white hover:bg-white/[0.06]"
                 }`
               }
+              style={{ transitionTimingFunction: EASE, transitionDuration: "200ms" }}
             >
               <div className="shrink-0 flex items-center justify-center w-5 h-5">
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: dot }} />
@@ -199,13 +221,14 @@ export default function Sidebar() {
       <div className="mt-6 space-y-0.5">
         {!collapsed && <div className="w-full h-px bg-white/10 mb-3" />}
         {SECONDARY_NAV.map((item) => (
-          <NavItem key={item.to} {...item} collapsed={collapsed} />
+          <NavItem key={item.to} {...item} collapsed={collapsed} onClick={onNavClick} />
         ))}
         {isAdmin && (
           <NavItem
             to="/admin"
             label="Admin"
             collapsed={collapsed}
+            onClick={onNavClick}
             icon={
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -223,32 +246,33 @@ export default function Sidebar() {
         <NavLink
           to="/profile"
           title={collapsed ? (user?.name ?? "Profile") : undefined}
+          onClick={onNavClick}
           className={({ isActive }) =>
-            `flex items-center gap-3 py-2 rounded-lg text-sm transition-colors ${
+            `flex items-center gap-3 py-2.5 rounded-lg text-[13px] transition-all ${
               collapsed ? "px-0 justify-center" : "px-3"
             } ${
               isActive
                 ? "bg-white/10 text-white"
-                : "text-ink-ghost hover:text-white hover:bg-white/5"
+                : "text-white/55 hover:text-white hover:bg-white/[0.06]"
             }`
           }
+          style={{ transitionTimingFunction: EASE, transitionDuration: "200ms" }}
         >
           <div className="shrink-0 flex items-center justify-center w-5 h-5">
             <span className="w-6 h-6 rounded-full bg-terra text-white text-[10px] font-semibold flex items-center justify-center">
-              {user?.name
-                ? user.name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()
-                : "U"}
+              {initials}
             </span>
           </div>
           {!collapsed && <span className="truncate">{user?.name ?? "Profile"}</span>}
         </NavLink>
 
         <button
-          onClick={handleLogout}
+          onClick={() => { handleLogout(); onNavClick?.(); }}
           title={collapsed ? "Sign out" : undefined}
-          className={`w-full flex items-center gap-3 py-2 rounded-lg text-sm text-ink-ghost hover:text-status-high hover:bg-status-high-dim transition-colors ${
+          className={`w-full flex items-center gap-3 py-2.5 rounded-lg text-[13px] text-white/55 hover:text-status-high hover:bg-status-high-dim transition-all active:scale-[0.97] ${
             collapsed ? "px-0 justify-center" : "px-3"
           }`}
+          style={{ transitionTimingFunction: EASE, transitionDuration: "200ms" }}
         >
           <div className="shrink-0 flex items-center justify-center w-5 h-5">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -258,6 +282,66 @@ export default function Sidebar() {
           {!collapsed && <span>Sign out</span>}
         </button>
       </div>
-    </aside>
+    </>
+  );
+}
+
+/* ── Main Sidebar Export ──────────────────────────────────────────────────── */
+
+export default function Sidebar() {
+  const { open, setOpen } = useDrawer();
+
+  const [collapsed, setCollapsed] = useState(() => {
+    return localStorage.getItem("sidebar_collapsed") === "true";
+  });
+
+  const toggleSidebar = () => {
+    setCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem("sidebar_collapsed", next.toString());
+      return next;
+    });
+  };
+
+  return (
+    <>
+      {/* ── Desktop sidebar (hidden on mobile) ─── */}
+      <aside
+        className={`hidden md:flex flex-col shrink-0 min-h-screen bg-ink py-5 transition-all ${collapsed ? "w-16 px-2" : "w-56 px-3"}`}
+        style={{ transitionTimingFunction: EASE, transitionDuration: "300ms" }}
+      >
+        <SidebarContent
+          collapsed={collapsed}
+          toggleSidebar={toggleSidebar}
+        />
+      </aside>
+
+      {/* ── Mobile drawer (visible on < md) ─── */}
+      <div
+        className={`drawer-backdrop md:hidden ${open ? "open" : ""}`}
+        onClick={() => setOpen(false)}
+        aria-hidden="true"
+      />
+      <aside
+        className={`drawer-panel md:hidden flex flex-col bg-ink py-5 px-3 ${open ? "open" : ""}`}
+      >
+        {/* Close button */}
+        <button
+          onClick={() => setOpen(false)}
+          className="absolute top-4 right-4 p-1.5 rounded-md text-white/40 hover:text-white hover:bg-white/10 transition-all active:scale-[0.92]"
+          style={{ transitionTimingFunction: EASE, transitionDuration: "200ms" }}
+          aria-label="Close menu"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <SidebarContent
+          collapsed={false}
+          toggleSidebar={() => {}}
+          onNavClick={() => setOpen(false)}
+          showToggle={false}
+        />
+      </aside>
+    </>
   );
 }

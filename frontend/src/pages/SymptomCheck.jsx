@@ -219,16 +219,17 @@ export default function SymptomCheck() {
   }
 
   return (
-    <div className="flex min-h-screen bg-parchment">
+    <div className="page-shell">
       <Sidebar />
 
-      <main className="flex-1 p-8 max-w-4xl">
+      <main className="page-main bg-parchment">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Header */}
-        <header className="mb-8">
-          <p className="text-xs font-mono tracking-widest text-ink-ghost uppercase mb-2">
+        <header className="mb-6 sm:mb-8 animate-fade-up">
+          <p className="text-[10px] font-mono tracking-widest text-ink-ghost uppercase mb-2">
             Triage Wizard
           </p>
-          <h1 className="font-serif text-3xl text-ink mb-2">Symptom Check</h1>
+          <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink mb-2">Symptom Check</h1>
           <p className="text-ink-light text-sm max-w-xl">
             Select the symptoms you are currently experiencing. This tool provides
             educational guidance only — it is not a medical diagnosis.
@@ -363,6 +364,7 @@ export default function SymptomCheck() {
             </p>
           </div>
         )}
+        </div>
       </main>
     </div>
   );

@@ -62,8 +62,8 @@ function ComparePanel({ items, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/30 backdrop-blur-sm">
-      <div className="bg-parchment rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-border">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in" style={{ background: "rgba(28,21,16,0.45)", backdropFilter: "blur(4px)" }}>
+      <div className="bg-parchment rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-border animate-scale-in">
         {/* Header */}
         <div className="sticky top-0 bg-parchment border-b border-border px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <div>
@@ -348,15 +348,16 @@ export default function History() {
   const hasNext = skip + PAGE_SIZE < total;
 
   return (
-    <div className="flex min-h-screen bg-parchment">
+    <div className="page-shell">
       <Sidebar />
 
-      <main className="flex-1 p-8">
-        <header className="mb-8">
-          <p className="text-xs font-mono tracking-widest text-ink-ghost uppercase mb-2">
+      <main className="page-main bg-parchment">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <header className="mb-6 sm:mb-8 animate-fade-up">
+          <p className="text-[10px] font-mono tracking-widest text-ink-ghost uppercase mb-2">
             My Records
           </p>
-          <h1 className="font-serif text-3xl text-ink mb-2">Prediction History</h1>
+          <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink mb-2">Prediction History</h1>
           <p className="text-ink-light text-sm">
             Your saved screening results.{" "}
             {total > 0 && <span className="text-ink-mid font-medium">{total} total</span>}
@@ -364,16 +365,17 @@ export default function History() {
         </header>
 
         {/* Filter bar + Compare CTA */}
-        <div className="flex items-center gap-2 mb-6 flex-wrap">
+        <div className="flex items-center gap-2 mb-5 sm:mb-6 flex-wrap overflow-x-auto scrollbar-hide animate-fade-up" style={{ animationDelay: "50ms" }}>
           {["", "diabetes", "heart", "tb", "cancer"].map((d) => (
             <button
               key={d}
               onClick={() => handleFilterChange(d)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border shrink-0 active:scale-[0.95]
                 ${diseaseFilter === d
-                  ? "bg-terra text-white border-terra"
+                  ? "bg-terra text-white border-terra shadow-sm shadow-terra/20"
                   : "bg-white text-ink-mid border-border hover:border-terra hover:text-terra"
                 }`}
+              style={{ transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)", transitionDuration: "200ms" }}
             >
               {d ? DISEASE_LABELS[d] : "All"}
             </button>
@@ -415,9 +417,8 @@ export default function History() {
 
         {/* Loading */}
         {loading && (
-          <div className="flex items-center gap-3 text-ink-light text-sm py-8">
-            <div className="w-4 h-4 border-2 border-terra border-t-transparent rounded-full animate-spin" />
-            Loading history…
+          <div className="space-y-3">
+            {[1,2,3,4].map(i => <div key={i} className="skeleton h-16 sm:h-[76px] rounded-xl" />)}
           </div>
         )}
 
@@ -433,7 +434,8 @@ export default function History() {
             <p className="text-sm text-ink-ghost mb-4">Run a screening to see your results here.</p>
             <button
               onClick={() => navigate("/predict")}
-              className="px-5 py-2.5 rounded-lg bg-terra text-white text-sm font-semibold hover:bg-terra-dark transition-colors"
+              className="px-5 py-2.5 rounded-xl bg-terra text-white text-sm font-semibold hover:bg-terra-dark transition-all active:scale-[0.97] shadow-sm shadow-terra/20"
+              style={{ transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)" }}
             >
               Start a prediction
             </button>
@@ -456,8 +458,9 @@ export default function History() {
                 return (
                   <div
                     key={item.id}
-                    className={`bg-white border rounded-xl p-5 flex items-center gap-5 transition-all
-                      ${isSelected ? "border-terra ring-1 ring-terra/20" : "border-border hover:border-border-strong"}`}
+                    className={`bg-white border rounded-xl p-4 sm:p-5 flex items-center gap-3 sm:gap-5 transition-all animate-fade-up
+                      ${isSelected ? "border-terra ring-1 ring-terra/20" : "border-border hover:border-border-strong hover:bg-parchment-lo/30"}`}
+                    style={{ transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)", transitionDuration: "200ms" }}
                   >
                     {/* Checkbox for comparison */}
                     <button
@@ -480,7 +483,7 @@ export default function History() {
                     </button>
 
                     {/* Disease dot */}
-                    <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: dot }} />
+                    <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full shrink-0 hidden sm:block" style={{ backgroundColor: dot }} />
 
                     {/* Disease + date */}
                     <div className="flex-1 min-w-0">
@@ -504,17 +507,26 @@ export default function History() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                       <button
                         onClick={() => navigate(`/history/${item.id}`)}
-                        className="text-xs text-terra hover:text-terra-dark underline transition-colors"
+                        className="text-xs text-terra hover:text-terra-dark transition-all active:scale-[0.95] hidden sm:block"
+                        style={{ transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)" }}
                       >
                         Detail
                       </button>
                       <button
+                        onClick={() => navigate(`/history/${item.id}`)}
+                        className="p-1.5 rounded-lg text-ink-ghost hover:text-terra hover:bg-terra-dim transition-all sm:hidden"
+                        title="View detail"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                      </button>
+                      <button
                         onClick={() => handleDelete(item.id)}
                         disabled={deleting === item.id}
-                        className="p-1.5 rounded-lg text-ink-ghost hover:text-status-high hover:bg-status-high-dim transition-colors disabled:opacity-40"
+                        className="p-1.5 rounded-lg text-ink-ghost hover:text-status-high hover:bg-status-high-dim transition-all disabled:opacity-40 active:scale-[0.92]"
+                        style={{ transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)" }}
                         title="Delete"
                       >
                         {deleting === item.id ? (
@@ -533,21 +545,23 @@ export default function History() {
 
             {/* Pagination */}
             {(hasPrev || hasNext) && (
-              <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-border-soft">
                 <button
                   disabled={!hasPrev}
                   onClick={() => load(skip - PAGE_SIZE)}
-                  className="px-4 py-2 rounded-lg text-sm border border-border text-ink-mid hover:border-border-strong transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-4 py-2 rounded-xl text-sm border border-border text-ink-mid hover:border-border-strong transition-all active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)" }}
                 >
                   ← Previous
                 </button>
-                <span className="text-xs text-ink-ghost font-mono">
+                <span className="text-[10px] sm:text-xs text-ink-ghost font-mono">
                   {skip + 1}–{Math.min(skip + PAGE_SIZE, total)} of {total}
                 </span>
                 <button
                   disabled={!hasNext}
                   onClick={() => load(skip + PAGE_SIZE)}
-                  className="px-4 py-2 rounded-lg text-sm border border-border text-ink-mid hover:border-border-strong transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-4 py-2 rounded-xl text-sm border border-border text-ink-mid hover:border-border-strong transition-all active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)" }}
                 >
                   Next →
                 </button>
@@ -555,6 +569,7 @@ export default function History() {
             )}
           </>
         )}
+        </div>
       </main>
 
       {/* Compare panel modal */}

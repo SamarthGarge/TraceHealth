@@ -1,4 +1,4 @@
-﻿/**
+/**
  * AboutModels.jsx — Explains the ML models used by TraceHealth per disease.
  * Fetches live accuracy metrics from /api/models/metadata.
  * Public page — accessible without login. Uses Sidebar when authenticated.
@@ -240,13 +240,13 @@ export default function AboutModels() {
   }, []);
 
   const content = (
-    <main className="flex-1 p-8 max-w-6xl">
+    <>
       {/* Header */}
-      <header className="mb-8">
-        <p className="text-xs font-mono tracking-widest text-ink-ghost uppercase mb-2">
+      <header className="mb-6 sm:mb-8 animate-fade-up">
+        <p className="text-[10px] font-mono tracking-widest text-ink-ghost uppercase mb-2">
           Transparency
         </p>
-        <h1 className="font-serif text-3xl text-ink mb-2">About the Models</h1>
+        <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink mb-2">About the Models</h1>
         <p className="text-ink-light text-sm max-w-xl">
           TraceHealth uses three independently trained ML models per disease — Logistic Regression,
           Random Forest, and XGBoost — and compares their results side by side with SHAP explanations.
@@ -314,14 +314,18 @@ export default function AboutModels() {
         real-world clinical performance. These models are for educational screening
         only and are not validated medical devices.
       </p>
-    </main>
+    </>
   );
 
   if (isAuthenticated) {
     return (
-      <div className="flex min-h-screen bg-parchment">
+      <div className="page-shell">
         <Sidebar />
-        {content}
+        <main className="page-main bg-parchment">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            {content}
+          </div>
+        </main>
       </div>
     );
   }
@@ -329,7 +333,7 @@ export default function AboutModels() {
   return (
     <div className="min-h-screen bg-parchment">
       <Header />
-      <div className="max-w-6xl mx-auto px-6 py-10">{content}</div>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10">{content}</div>
     </div>
   );
 }

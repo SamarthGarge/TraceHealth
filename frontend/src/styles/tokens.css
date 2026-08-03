@@ -354,3 +354,147 @@ body {
 /* ── Scrollbar hide — horizontal scroll-snap containers ──────────────────── */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Mobile drawer overlay ───────────────────────────────────────────────── */
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(28, 21, 16, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 300ms cubic-bezier(0.23, 1, 0.32, 1);
+  pointer-events: none;
+}
+.drawer-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.drawer-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 50;
+  width: 280px;
+  max-width: 85vw;
+  transform: translateX(-100%);
+  transition: transform 350ms cubic-bezier(0.23, 1, 0.32, 1);
+  will-change: transform;
+}
+.drawer-panel.open {
+  transform: translateX(0);
+}
+
+/* ── Mobile top bar — shows on < md when sidebar is hidden ───────────────── */
+.mobile-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background: var(--white);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+@media (min-width: 768px) {
+  .mobile-topbar { display: none; }
+}
+
+/* ── Page wrapper — content area next to sidebar ─────────────────────────── */
+.page-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.page-main {
+  flex: 1;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+/* ── Reusable animation keyframes ────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-up {
+  animation: fadeUp 500ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.animate-fade-in {
+  animation: fadeIn 400ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.animate-scale-in {
+  animation: scaleIn 300ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+/* Stagger delays — apply to children */
+.stagger-1 { animation-delay: 50ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+.stagger-4 { animation-delay: 200ms; }
+.stagger-5 { animation-delay: 250ms; }
+.stagger-6 { animation-delay: 300ms; }
+
+/* ── Skeleton loading ────────────────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, var(--parchment-lo) 25%, var(--parchment) 50%, var(--parchment-lo) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-md);
+}
+
+/* ── Responsive auth layout enhancements ─────────────────────────────────── */
+@media (max-width: 480px) {
+  .auth-form-panel {
+    padding: var(--space-8) var(--space-5);
+  }
+}
+
+/* ── Enhanced card hover (Kowalski) ──────────────────────────────────────── */
+.card-hover {
+  transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1),
+              box-shadow 200ms cubic-bezier(0.23, 1, 0.32, 1),
+              border-color 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-strong);
+}
+.card-hover:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* ── Responsive text utilities ───────────────────────────────────────────── */
+.text-balance { text-wrap: balance; }
+
+/* ── Overflow clip on html/body (Hallmark gate 34) ───────────────────────── */
+html, body { overflow-x: clip; }

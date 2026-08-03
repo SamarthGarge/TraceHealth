@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Resources.jsx — Trusted health resources organized by disease.
  * Public page — accessible without login.
  * Uses Sidebar layout when authenticated, standalone header when public.
@@ -211,13 +211,13 @@ export default function Resources() {
   const active = DISEASES.find((d) => d.key === activeTab);
 
   const content = (
-    <main className="flex-1 p-8 max-w-5xl">
+    <>
       {/* Header */}
-      <header className="mb-8">
-        <p className="text-xs font-mono tracking-widest text-ink-ghost uppercase mb-2">
+      <header className="mb-6 sm:mb-8 animate-fade-up">
+        <p className="text-[10px] font-mono tracking-widest text-ink-ghost uppercase mb-2">
           Trusted Information
         </p>
-        <h1 className="font-serif text-3xl text-ink mb-2">Health Resources</h1>
+        <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink mb-2">Health Resources</h1>
         <p className="text-ink-light text-sm max-w-xl">
           Curated links to guidelines, fact sheets, and patient education from the world's
           leading health organisations — WHO, CDC, AHA, and more.
@@ -225,17 +225,18 @@ export default function Resources() {
       </header>
 
       {/* Disease tabs */}
-      <div className="flex flex-wrap gap-2 mb-8">
+      <div className="flex flex-wrap gap-2 mb-6 sm:mb-8 animate-fade-up overflow-x-auto scrollbar-hide" style={{ animationDelay: "50ms" }}>
         {DISEASES.map((d) => (
           <button
             key={d.key}
             onClick={() => setActiveTab(d.key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
-              border transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium shrink-0
+              border transition-all active:scale-[0.95] ${
                 activeTab === d.key
-                  ? "border-terra bg-terra text-white shadow-sm"
+                  ? "border-terra bg-terra text-white shadow-sm shadow-terra/20"
                   : "border-border bg-white text-ink-mid hover:border-terra/50 hover:text-ink"
               }`}
+            style={{ transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)", transitionDuration: "200ms" }}
           >
             <span
               className="w-2 h-2 rounded-full shrink-0"
@@ -248,12 +249,12 @@ export default function Resources() {
 
       {/* Active disease section */}
       {active && (
-        <div>
-          <div className="mb-6">
-            <h2 className="font-serif text-xl text-ink mb-1">{active.label}</h2>
+        <div className="animate-fade-up" style={{ animationDelay: "100ms" }}>
+          <div className="mb-5 sm:mb-6">
+            <h2 className="font-display text-xl font-semibold text-ink mb-1">{active.label}</h2>
             <p className="text-sm text-ink-light">{active.description}</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {active.resources.map((r) => (
               <ResourceCard key={r.url} resource={r} />
             ))}
@@ -262,19 +263,23 @@ export default function Resources() {
       )}
 
       {/* Disclaimer */}
-      <p className="mt-10 text-xs text-ink-ghost leading-relaxed max-w-xl">
-        ⚠ These resources are from reputable public-health organisations and are provided for
+      <p className="mt-8 sm:mt-10 text-xs text-ink-ghost leading-relaxed max-w-xl">
+        These resources are from reputable public-health organisations and are provided for
         informational purposes only. TraceHealth does not endorse any specific treatment,
         product, or clinical pathway. Always consult a qualified healthcare professional.
       </p>
-    </main>
+    </>
   );
 
   if (isAuthenticated) {
     return (
-      <div className="flex min-h-screen bg-parchment">
+      <div className="page-shell">
         <Sidebar />
-        {content}
+        <main className="page-main bg-parchment">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            {content}
+          </div>
+        </main>
       </div>
     );
   }
@@ -282,7 +287,8 @@ export default function Resources() {
   return (
     <div className="min-h-screen bg-parchment">
       <Header />
-      <div className="max-w-5xl mx-auto px-6 py-10">{content}</div>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">{content}</div>
     </div>
   );
 }
+

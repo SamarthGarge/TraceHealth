@@ -7,9 +7,9 @@ import { useAuth } from "../context/AuthContext";
 import { loginSchema } from "../utils/validation";
 
 /**
- * Login page — DataLens auth split-panel layout (UI Design System §14).
- * Left panel: branding + editorial headline.
- * Right panel: email/password form + Google OAuth.
+ * Login page — editorial split-panel auth layout.
+ * Left: brand + value proposition. Right: form.
+ * Responsive: brand panel hidden on mobile, form centers.
  */
 export default function Login() {
   const navigate = useNavigate();
@@ -31,7 +31,7 @@ export default function Login() {
     setServerError("");
     try {
       const result = await login({ email: data.email, password: data.password });
-      setUser(result.user); // update AuthContext without a page reload
+      setUser(result.user);
       navigate(from, { replace: true });
     } catch (err) {
       const msg = err.response?.data?.detail || "Invalid email or password. Please try again.";
@@ -42,21 +42,22 @@ export default function Login() {
   }
 
   function handleGoogle() {
-    loginWithGoogle(); // plain window.location redirect to /api/auth/google
+    loginWithGoogle();
   }
 
   return (
     <div className="auth-layout">
       {/* ── Left brand panel ───────────────────────────────────────────── */}
       <div className="auth-brand-panel">
-        <div className="mb-8">
-          <p className="font-mono text-xs tracking-widest text-ink-light uppercase mb-6">
-            TraceHealth
-          </p>
-          <h1 className="font-display text-5xl font-semibold leading-tight text-ink mb-6">
-            Understand your<br />
-            health risk,<br />
-            <em>transparently.</em>
+        <div className="mb-8 animate-fade-up">
+          <div className="flex items-center gap-2.5 mb-8">
+            <img src="/new_logo.svg" alt="" className="w-8 h-8 rounded-lg border border-border-soft" />
+            <span className="font-serif text-lg text-ink">TraceHealth</span>
+          </div>
+          <h1 className="font-display text-4xl sm:text-5xl font-semibold leading-tight text-ink mb-6 text-balance">
+            Understand your
+            health risk,
+            transparently.
           </h1>
           <p className="text-ink-mid text-base leading-relaxed max-w-sm">
             Explainable ML-powered screening for four conditions — every
@@ -64,8 +65,8 @@ export default function Login() {
           </p>
         </div>
 
-        {/* Feature pill list */}
-        <div className="flex flex-col gap-3 mb-10">
+        {/* Feature list */}
+        <div className="flex flex-col gap-3 mb-10 animate-fade-up stagger-2">
           {[
             "SHAP Explainability",
             "Multi-Model Comparison",
@@ -73,14 +74,14 @@ export default function Login() {
             "Private by Design",
           ].map((feature) => (
             <div key={feature} className="flex items-center gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-terra flex-shrink-0" />
+              <div className="w-1.5 h-1.5 rounded-full bg-terra shrink-0" />
               <span className="text-ink-mid text-sm font-medium">{feature}</span>
             </div>
           ))}
         </div>
 
         {/* Stat row */}
-        <div className="flex gap-8 pt-6 border-t border-border-soft">
+        <div className="flex gap-8 pt-6 border-t border-border-soft animate-fade-up stagger-3">
           {[
             { num: "4", label: "Diseases" },
             { num: "3", label: "Models / Disease" },
@@ -100,7 +101,13 @@ export default function Login() {
 
       {/* ── Right form panel ───────────────────────────────────────────── */}
       <div className="auth-form-panel">
-        <div className="w-full" style={{ maxWidth: 380 }}>
+        <div className="w-full animate-fade-up" style={{ maxWidth: 380 }}>
+          {/* Mobile-only logo */}
+          <div className="flex items-center gap-2.5 mb-6 md:hidden">
+            <img src="/new_logo.svg" alt="" className="w-7 h-7 rounded-lg border border-border-soft" />
+            <span className="font-serif text-lg text-ink">TraceHealth</span>
+          </div>
+
           <h2 className="text-2xl font-semibold text-ink mb-1">Welcome back</h2>
           <p className="text-ink-light text-sm mb-8">
             Don't have an account?{" "}
@@ -112,7 +119,8 @@ export default function Login() {
           {/* Google OAuth */}
           <button
             onClick={handleGoogle}
-            className="w-full btn btn-secondary mb-4 gap-3"
+            className="w-full btn btn-secondary mb-4 gap-3 active:scale-[0.97] transition-transform"
+            style={{ transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)" }}
           >
             <GoogleIcon />
             Continue with Google
@@ -127,7 +135,7 @@ export default function Login() {
           {/* Email/password form */}
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
             {serverError && (
-              <div className="error-box mb-4" role="alert">
+              <div className="error-box mb-4 animate-fade-up" role="alert">
                 {serverError}
               </div>
             )}
@@ -145,7 +153,7 @@ export default function Login() {
                 {...register("email")}
               />
               {errors.email && (
-                <p className="text-status-high text-xs mt-1">{errors.email.message}</p>
+                <p className="text-status-high text-xs mt-1.5">{errors.email.message}</p>
               )}
             </div>
 
@@ -162,13 +170,14 @@ export default function Login() {
                 {...register("password")}
               />
               {errors.password && (
-                <p className="text-status-high text-xs mt-1">{errors.password.message}</p>
+                <p className="text-status-high text-xs mt-1.5">{errors.password.message}</p>
               )}
             </div>
 
             <button
               type="submit"
-              className="btn btn-primary w-full"
+              className="btn btn-primary w-full active:scale-[0.97] transition-transform"
+              style={{ transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)" }}
               disabled={isLoading}
             >
               {isLoading ? <span className="spinner" style={{ width: 16, height: 16 }} /> : "Sign in"}

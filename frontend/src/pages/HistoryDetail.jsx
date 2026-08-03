@@ -42,16 +42,17 @@ export default function HistoryDetail() {
   }
 
   return (
-    <div className="flex min-h-screen bg-parchment">
+    <div className="page-shell">
       <Sidebar />
 
-      <main className="flex-1 p-8">
+      <main className="page-main bg-parchment">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-xs font-mono text-ink-ghost mb-6">
-          <button onClick={() => navigate("/history")} className="hover:text-terra transition-colors">
+        <div className="flex items-center gap-2 text-xs font-mono text-ink-ghost mb-4 sm:mb-6 animate-fade-up">
+          <button onClick={() => navigate("/history")} className="hover:text-terra transition-colors active:scale-[0.97]" style={{ transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)" }}>
             History
           </button>
-          <span>/</span>
+          <span className="text-ink-ghost/40">/</span>
           <span className="text-ink-mid truncate max-w-xs">{id}</span>
         </div>
 
@@ -77,9 +78,9 @@ export default function HistoryDetail() {
             <div className="flex items-start justify-between mb-8">
               <div>
                 <p className="text-xs font-mono tracking-widest text-ink-ghost uppercase mb-2">
-                  Risk Screening Record
+              Risk Screening Record
                 </p>
-                <h1 className="font-serif text-3xl text-ink mb-1">
+                <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink mb-1">
                   {DISEASE_LABELS[detail.disease] ?? detail.disease}
                 </h1>
                 {detail.created_at && (
@@ -146,6 +147,7 @@ export default function HistoryDetail() {
             </p>
           </div>
         )}
+        </div>
       </main>
     </div>
   );

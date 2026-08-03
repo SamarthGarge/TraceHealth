@@ -171,28 +171,30 @@ export default function Admin() {
   if (!isAdmin) return null;
 
   return (
-    <div className="flex min-h-screen bg-parchment">
+    <div className="page-shell">
       <Sidebar />
 
-      <main className="flex-1 p-8 max-w-6xl">
+      <main className="page-main bg-parchment">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Header */}
-        <header className="mb-8">
-          <p className="text-xs font-mono tracking-widest text-ink-ghost uppercase mb-1">System</p>
-          <h1 className="font-serif text-3xl text-ink">Admin Panel</h1>
+        <header className="mb-6 sm:mb-8 animate-fade-up">
+          <p className="text-[10px] font-mono tracking-widest text-ink-ghost uppercase mb-1">System</p>
+          <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink">Admin Panel</h1>
           <p className="text-ink-light text-sm mt-1">Platform management — visible to admins only.</p>
         </header>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-8 bg-white border border-border rounded-xl p-1 w-fit">
+        <div className="flex gap-1 mb-6 sm:mb-8 bg-white border border-border rounded-xl p-1 w-fit overflow-x-auto scrollbar-hide animate-fade-up" style={{ animationDelay: "50ms" }}>
           {TABS.map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all shrink-0 active:scale-[0.97] ${
                 tab === t
-                  ? "bg-terra text-white shadow-sm"
+                  ? "bg-terra text-white shadow-sm shadow-terra/20"
                   : "text-ink-mid hover:text-ink hover:bg-parchment-lo"
               }`}
+              style={{ transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)", transitionDuration: "200ms" }}
             >
               {t}
             </button>
@@ -416,6 +418,7 @@ export default function Admin() {
             <Pagination skip={predSkip} total={predTotal} limit={PAGE_SIZE} onPage={(s) => loadPreds(s, predDisease)} />
           </div>
         )}
+        </div>
       </main>
     </div>
   );
