@@ -1,10 +1,11 @@
 """
 Export router — lets authenticated users download their prediction history
-as CSV or JSON.
+as CSV, JSON, or a professional PDF report.
 
 Endpoints:
-  GET /api/export/predictions?format=csv|json   — full history export
-  GET /api/export/predictions/{id}?format=csv|json — single prediction export
+  GET /api/export/predictions?format=csv|json&date_from=&date_to=
+  GET /api/export/predictions/pdf?date_from=&date_to=&disease=
+  GET /api/export/predictions/{id}?format=csv|json
 
 Security:
   - Requires authentication (same as history router)
@@ -15,7 +16,7 @@ Security:
 import csv
 import io
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -68,7 +69,7 @@ def _make_csv(rows: list[dict]) -> str:
 
 
 def _make_json(docs: list[dict]) -> str:
-    """Serialise prediction docs to pretty JSON (ObjectId → str, datetime → ISO)."""
+    """Serialise prediction docs to pretty JSON (ObjectId -> str, datetime -> ISO)."""
     def default(obj):
         if isinstance(obj, ObjectId):
             return str(obj)
@@ -95,17 +96,50 @@ def _timestamp() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
 
+def _parse_date(value: str | None, default: datetime | None = None) -> datetime | None:
+    """Parse an ISO date string (YYYY-MM-DD) into a timezone-aware datetime."""
+    if not value:
+        return default
+    try:
+        dt = datetime.strptime(value, "%Y-%m-%d")
+        return dt.replace(tzinfo=timezone.utc)
+    except ValueError:
+        try:
+            dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            return dt
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid date format: '{value}'. Expected YYYY-MM-DD.",
+            )
+
+
+def _build_date_query(date_from: datetime | None, date_to: datetime | None) -> dict:
+    """Build a MongoDB date range filter for created_at."""
+    if not date_from and not date_to:
+        return {}
+    q = {}
+    if date_from:
+        q["$gte"] = date_from
+    if date_to:
+        # Include the entire end date (up to 23:59:59.999)
+        q["$lte"] = date_to.replace(hour=23, minute=59, second=59, microsecond=999999)
+    return {"created_at": q}
+
+
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @router.get("/export/predictions")
 async def export_all_predictions(
     format: str = Query("csv", description="Export format: 'csv' or 'json'"),
     disease: str = Query(None, description="Filter by disease (optional)"),
+    date_from: str = Query(None, description="Start date (YYYY-MM-DD)"),
+    date_to: str = Query(None, description="End date (YYYY-MM-DD)"),
     current_user: dict = Depends(require_auth),
 ):
     """
-    Export the authenticated user's full prediction history as CSV or JSON.
-    Optionally filter by disease.
+    Export the authenticated user's prediction history as CSV or JSON.
+    Supports date range and disease filters.
     """
     db = get_db()
     fmt = _validate_format(format)
@@ -114,8 +148,15 @@ async def export_all_predictions(
     if disease:
         query["disease"] = disease.lower()
 
+    # Apply date range filter
+    df = _parse_date(date_from)
+    dt = _parse_date(date_to)
+    date_filter = _build_date_query(df, dt)
+    if date_filter:
+        query.update(date_filter)
+
     cursor = db.predictions.find(query).sort("created_at", -1)
-    docs = await cursor.to_list(length=10_000)   # hard cap at 10k rows
+    docs = await cursor.to_list(length=10_000)
 
     timestamp = _timestamp()
     disease_tag = f"_{disease}" if disease else ""
@@ -139,21 +180,35 @@ async def export_all_predictions(
 @router.get("/export/predictions/pdf")
 async def export_pdf_report(
     disease: str = Query(None, description="Filter by disease (optional)"),
+    date_from: str = Query(None, description="Start date (YYYY-MM-DD)"),
+    date_to: str = Query(None, description="End date (YYYY-MM-DD)"),
     current_user: dict = Depends(require_auth),
 ):
     """
-    Generate and stream a detailed PDF report of the user's prediction history.
-    Includes cover page, per-disease tables, SHAP highlights, Grad-CAM images
-    for image-based predictions, and methodology note.
+    Generate a professional PDF report of the user's prediction history.
+    Each prediction gets its own page. Supports date range and disease filters.
+    Defaults to last 7 days if no dates provided.
 
     NOTE: This route MUST be declared before /export/predictions/{prediction_id}
     so FastAPI does not match the literal string 'pdf' as a path parameter.
     """
     db = get_db()
 
+    # Parse dates — default to last 7 days if neither is provided
+    df = _parse_date(date_from)
+    dt = _parse_date(date_to)
+
+    if df is None and dt is None:
+        dt = datetime.now(timezone.utc)
+        df = dt - timedelta(days=7)
+
     query: dict = {"user_id": current_user["sub"]}
     if disease:
         query["disease"] = disease.lower()
+
+    date_filter = _build_date_query(df, dt)
+    if date_filter:
+        query.update(date_filter)
 
     cursor = db.predictions.find(query).sort("created_at", -1)
     docs = await cursor.to_list(length=5_000)
@@ -201,6 +256,8 @@ async def export_pdf_report(
         user_email=user_doc.get("email", current_user.get("email", "")),
         disease_filter=disease or None,
         image_predictions=image_predictions,
+        date_from=df,
+        date_to=dt,
     )
 
     timestamp = _timestamp()

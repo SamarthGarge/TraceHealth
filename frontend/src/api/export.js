@@ -10,10 +10,14 @@ import apiClient from "./client";
  * @param {object} opts
  * @param {"csv"|"json"} [opts.format="csv"]
  * @param {string}       [opts.disease]        - optional filter
+ * @param {string}       [opts.dateFrom]       - YYYY-MM-DD
+ * @param {string}       [opts.dateTo]         - YYYY-MM-DD
  */
-export async function exportAllPredictions({ format = "csv", disease } = {}) {
+export async function exportAllPredictions({ format = "csv", disease, dateFrom, dateTo } = {}) {
   const params = { format };
   if (disease) params.disease = disease;
+  if (dateFrom) params.date_from = dateFrom;
+  if (dateTo) params.date_to = dateTo;
 
   const res = await apiClient.get("/api/export/predictions", {
     params,

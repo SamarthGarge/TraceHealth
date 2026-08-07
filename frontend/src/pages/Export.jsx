@@ -1,12 +1,32 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Sidebar from "../components/layout/Sidebar";
 import { exportAllPredictions } from "../api/export";
 import apiClient from "../api/client";
 
+// ── Date helpers ──────────────────────────────────────────────────────────────
+
+function toISODate(d) {
+  return d.toISOString().split("T")[0]; // YYYY-MM-DD
+}
+
+function daysAgo(n) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return toISODate(d);
+}
+
+function formatDisplayDate(isoStr) {
+  if (!isoStr) return "";
+  const d = new Date(isoStr + "T00:00:00");
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
 // helper for PDF (different endpoint)
-async function exportPdf(disease) {
+async function exportPdf({ disease, dateFrom, dateTo }) {
   const params = {};
   if (disease) params.disease = disease;
+  if (dateFrom) params.date_from = dateFrom;
+  if (dateTo) params.date_to = dateTo;
   const res = await apiClient.get("/api/export/predictions/pdf", {
     params,
     responseType: "blob",
@@ -55,7 +75,7 @@ const FORMAT_OPTIONS = [
   {
     value: "pdf",
     label: "PDF Report",
-    description: "Detailed report with cover page, disease sections, SHAP highlights, and methodology. Shareable with a doctor.",
+    description: "Professional report with 1 prediction per page, SHAP analysis, and Grad-CAM images.",
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -64,14 +84,38 @@ const FORMAT_OPTIONS = [
   },
 ];
 
+const QUICK_RANGES = [
+  { label: "Last 7 days",  days: 7 },
+  { label: "Last 30 days", days: 30 },
+  { label: "Last 90 days", days: 90 },
+  { label: "All time",     days: null },
+];
+
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export default function Export() {
-  const [format, setFormat]   = useState("csv");
-  const [disease, setDisease] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState("");
-  const [success, setSuccess] = useState("");
+  const [format, setFormat]     = useState("pdf");
+  const [disease, setDisease]   = useState("");
+  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateTo, setDateTo]     = useState(toISODate(new Date()));
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState("");
+  const [success, setSuccess]   = useState("");
+
+  const dateRangeLabel = useMemo(() => {
+    if (!dateFrom && !dateTo) return "All time";
+    return `${formatDisplayDate(dateFrom)} — ${formatDisplayDate(dateTo)}`;
+  }, [dateFrom, dateTo]);
+
+  function applyQuickRange(days) {
+    if (days === null) {
+      setDateFrom("");
+      setDateTo("");
+    } else {
+      setDateFrom(daysAgo(days));
+      setDateTo(toISODate(new Date()));
+    }
+  }
 
   async function handleExport() {
     setLoading(true);
@@ -79,10 +123,19 @@ export default function Export() {
     setSuccess("");
     try {
       if (format === "pdf") {
-        await exportPdf(disease || undefined);
+        await exportPdf({
+          disease: disease || undefined,
+          dateFrom: dateFrom || undefined,
+          dateTo: dateTo || undefined,
+        });
         setSuccess("Downloaded PDF report.");
       } else {
-        await exportAllPredictions({ format, disease: disease || undefined });
+        await exportAllPredictions({
+          format,
+          disease: disease || undefined,
+          dateFrom: dateFrom || undefined,
+          dateTo: dateTo || undefined,
+        });
         setSuccess(`Downloaded predictions as ${format.toUpperCase()}.`);
       }
       setTimeout(() => setSuccess(""), 4000);
@@ -114,7 +167,7 @@ export default function Export() {
         {/* Format selector */}
         <div className="mb-5 sm:mb-6 animate-fade-up" style={{ animationDelay: "50ms" }}>
           <p className="text-[11px] font-semibold text-ink-mid mb-3 uppercase tracking-wider font-mono">Export format</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {FORMAT_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
@@ -140,8 +193,61 @@ export default function Export() {
           </div>
         </div>
 
+        {/* Date range picker */}
+        <div className="mb-5 sm:mb-6 animate-fade-up" style={{ animationDelay: "100ms" }}>
+          <p className="text-[11px] font-semibold text-ink-mid mb-3 uppercase tracking-wider font-mono">Date range</p>
+
+          {/* Quick range buttons */}
+          <div className="flex flex-wrap gap-2 mb-3">
+            {QUICK_RANGES.map((qr) => {
+              const isActive =
+                (qr.days === null && !dateFrom && !dateTo) ||
+                (qr.days !== null && dateFrom === daysAgo(qr.days) && dateTo === toISODate(new Date()));
+              return (
+                <button
+                  key={qr.label}
+                  onClick={() => applyQuickRange(qr.days)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all active:scale-[0.96]
+                    ${isActive
+                      ? "border-terra bg-terra text-white shadow-sm shadow-terra/20"
+                      : "border-border bg-white text-ink-mid hover:border-terra/40 hover:text-ink"
+                    }`}
+                  style={{ transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)", transitionDuration: "180ms" }}
+                >
+                  {qr.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Custom date inputs */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-mono text-ink-ghost uppercase block mb-1">From</label>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                max={dateTo || undefined}
+                className="input w-full"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-mono text-ink-ghost uppercase block mb-1">To</label>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                min={dateFrom || undefined}
+                max={toISODate(new Date())}
+                className="input w-full"
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Disease filter */}
-        <div className="mb-6 sm:mb-8 animate-fade-up" style={{ animationDelay: "100ms" }}>
+        <div className="mb-5 sm:mb-6 animate-fade-up" style={{ animationDelay: "150ms" }}>
           <label className="text-[11px] font-semibold text-ink-mid block mb-2 uppercase tracking-wider font-mono">
             Filter by disease
           </label>
@@ -157,17 +263,22 @@ export default function Export() {
         </div>
 
         {/* What's included */}
-        <div className="card mb-5 sm:mb-6 animate-fade-up" style={{ animationDelay: "150ms" }}>
+        <div className="card mb-5 sm:mb-6 animate-fade-up" style={{ animationDelay: "200ms" }}>
           <p className="text-[11px] font-semibold text-ink-mid mb-3 uppercase tracking-wider font-mono">What's included</p>
           <ul className="space-y-2">
             {[
+              `Predictions from ${dateRangeLabel}`,
               "Prediction date and disease type",
-              "All input feature values",
-              "Ensemble probability and risk level",
-              format === "json"
+              format === "pdf"
+                ? "1 prediction per page with detailed analysis"
+                : "All input feature values",
+              format === "pdf"
+                ? "SHAP feature explanations and Grad-CAM images"
+                : format === "json"
                 ? "Full per-model results (LR, RF, XGBoost) with SHAP values"
                 : "Per-model probability and risk level (LR, RF, XGBoost)",
-            ].map((item) => (
+              format === "pdf" && "Professional cover page and methodology section",
+            ].filter(Boolean).map((item) => (
               <li key={item} className="flex items-start gap-2 text-xs text-ink-mid">
                 <svg className="w-3.5 h-3.5 text-status-low mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -187,12 +298,12 @@ export default function Export() {
 
         {/* Error / success */}
         {error && (
-          <div className="mb-4 p-4 rounded-lg border border-status-high bg-status-high-dim text-status-high text-sm">
+          <div className="mb-4 p-4 rounded-lg border border-status-high bg-status-high-dim text-status-high text-sm animate-fade-up">
             {error}
           </div>
         )}
         {success && (
-          <div className="mb-4 p-4 rounded-lg border border-status-low bg-status-low-dim text-status-low text-sm flex items-center gap-2">
+          <div className="mb-4 p-4 rounded-lg border border-status-low bg-status-low-dim text-status-low text-sm flex items-center gap-2 animate-fade-up">
             <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
