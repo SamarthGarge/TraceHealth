@@ -48,6 +48,30 @@ export async function getMe() {
 }
 
 /**
+ * Request a password reset email.
+ * @param {string} email
+ * @returns {{ message }}
+ */
+export async function forgotPassword(email) {
+  const res = await apiClient.post("/api/auth/forgot-password", { email });
+  return res.data;
+}
+
+/**
+ * Reset password using a reset token.
+ * @param {string} token - Reset JWT from email link
+ * @param {string} newPassword
+ * @returns {{ message }}
+ */
+export async function resetPassword(token, newPassword) {
+  const res = await apiClient.post("/api/auth/reset-password", {
+    token,
+    new_password: newPassword,
+  });
+  return res.data;
+}
+
+/**
  * Redirect to the Google OAuth flow.
  * The backend handles the redirect — no axios call needed.
  */

@@ -27,6 +27,13 @@ class Settings(BaseSettings):
     # Redirect URI registered in GCP — must match exactly
     GOOGLE_REDIRECT_URI: str = "http://localhost:8000/api/auth/google/callback"
 
+    # --- SMTP (Gmail for password reset emails) ---
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""                          # e.g. tracehealth.noreply@gmail.com
+    SMTP_PASSWORD: str = ""                      # Gmail App Password (16 chars)
+    SMTP_FROM_NAME: str = "TraceHealth"
+
     # --- App ---
     FRONTEND_ORIGIN: str = "http://localhost:5173"
     ENVIRONMENT: str = "development"   # "development" | "production"

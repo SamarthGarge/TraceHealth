@@ -8,6 +8,8 @@ Endpoints:
   POST /api/auth/logout          — clears auth cookies
   GET  /api/auth/me              — returns current user profile
   POST /api/auth/refresh         — issues a new access token from refresh cookie
+  POST /api/auth/forgot-password — sends password reset email via Resend
+  POST /api/auth/reset-password  — verifies reset token and updates password
   GET  /api/auth/google          — starts Google OAuth redirect
   GET  /api/auth/google/callback — Google OAuth callback, sets cookies
   POST /api/auth/admin/login     — admin-only login (403 for non-admin users)
@@ -24,10 +26,16 @@ from app.core.jwt import (
     create_access_token,
     create_refresh_token,
     verify_refresh_token,
+    create_reset_token,
+    verify_reset_token,
 )
 from app.core.password import hash_password, verify_password
 from app.db import get_db
-from app.models.user import LoginRequest, SignupRequest, TokenResponse, UserOut
+from app.models.user import (
+    LoginRequest, SignupRequest, TokenResponse, UserOut,
+    ForgotPasswordRequest, ResetPasswordRequest,
+)
+from app.utils.email import send_reset_email
 from app.security.dependencies import require_auth
 from app.utils.logging import get_logger
 
@@ -197,6 +205,85 @@ async def refresh_token(request: Request, response: Response):
 
     _set_auth_cookies(response, user)
     return TokenResponse(user=_user_to_out(user))
+
+
+# ── Password Reset ─────────────────────────────────────────────────────────────
+
+@router.post("/auth/forgot-password")
+async def forgot_password(body: ForgotPasswordRequest):
+    """
+    Sends a password reset email via Resend.
+    Always returns 200 regardless of whether the email exists (prevents enumeration).
+    Skips Google-only accounts — they don't have a password to reset.
+    """
+    db = get_db()
+    user = await db.users.find_one({"email": body.email})
+
+    if user:
+        # Skip Google-only users
+        if user.get("provider") == "google" and not user.get("password_hash"):
+            logger.info("Skipping reset for Google-only account: %s", body.email)
+        else:
+            token = create_reset_token(
+                user_id=str(user["_id"]),
+                email=user["email"],
+            )
+            reset_url = f"{settings.FRONTEND_ORIGIN}/reset-password?token={token}"
+            send_reset_email(
+                to=user["email"],
+                reset_url=reset_url,
+                user_name=user.get("name", ""),
+            )
+            logger.info("Reset email sent to: %s", body.email)
+    else:
+        logger.info("Password reset requested for non-existent email: %s", body.email)
+
+    # Always return the same response — no user enumeration
+    return {
+        "message": "If an account with that email exists, we've sent a password reset link."
+    }
+
+
+@router.post("/auth/reset-password")
+async def reset_password(body: ResetPasswordRequest):
+    """
+    Verifies the reset token and updates the user's password.
+    The token is a short-lived JWT with type='reset'.
+    """
+    try:
+        payload = verify_reset_token(body.token)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset link. Please request a new one.",
+        )
+
+    db = get_db()
+    from bson import ObjectId
+    user = await db.users.find_one({"_id": ObjectId(payload["sub"])})
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset link. Please request a new one.",
+        )
+
+    # Extra safety: verify email matches
+    if user.get("email") != payload.get("email"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset link. Please request a new one.",
+        )
+
+    # Update the password
+    new_hash = hash_password(body.new_password)
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {"password_hash": new_hash, "updatedAt": datetime.now(timezone.utc)}},
+    )
+
+    logger.info("Password reset successful for: %s", user["email"])
+    return {"message": "Password reset successfully. You can now log in with your new password."}
 
 
 # ── Google OAuth ───────────────────────────────────────────────────────────────

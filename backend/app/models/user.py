@@ -38,3 +38,14 @@ class TokenResponse(BaseModel):
     """Returned on login/signup so the frontend can read the user object."""
     user: UserOut
     message: str = "ok"
+
+
+# ── Password reset schemas ─────────────────────────────────────────────────────
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(..., min_length=10)
+    new_password: str = Field(..., min_length=8, max_length=128)
+

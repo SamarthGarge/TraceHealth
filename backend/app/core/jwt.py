@@ -72,3 +72,31 @@ def verify_refresh_token(token: str) -> dict:
     if payload.get("type") != REFRESH_TOKEN_TYPE:
         raise JWTError("Not a refresh token.")
     return payload
+
+
+# ── Password reset tokens ─────────────────────────────────────────────────────
+
+RESET_TOKEN_TYPE = "reset"
+RESET_TOKEN_EXPIRE_MINUTES = 15
+
+
+def create_reset_token(user_id: str, email: str) -> str:
+    """Creates a short-lived reset JWT (15 min) for password recovery."""
+    expire = _now_utc() + timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES)
+    payload = {
+        "sub": user_id,
+        "email": email,
+        "type": RESET_TOKEN_TYPE,
+        "exp": expire,
+        "iat": _now_utc(),
+    }
+    return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+
+
+def verify_reset_token(token: str) -> dict:
+    """Decodes the token and confirms it is a password-reset token."""
+    payload = decode_token(token)
+    if payload.get("type") != RESET_TOKEN_TYPE:
+        raise JWTError("Not a reset token.")
+    return payload
+

@@ -8,6 +8,8 @@ import Login       from "./pages/Login";
 import Signup      from "./pages/Signup";
 import AdminLogin  from "./pages/AdminLogin";
 import OAuthCallback from "./pages/OAuthCallback";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword  from "./pages/ResetPassword";
 import NotFound    from "./pages/NotFound";
 
 // Lazy-loaded pages (code-split by route for performance)
@@ -48,6 +50,8 @@ export default function App() {
         <Route path="/"                element={<Landing />} />
         <Route path="/login"           element={<Login />} />
         <Route path="/signup"          element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password"  element={<ResetPassword />} />
         <Route path="/admin/login"     element={<AdminLogin />} />
         <Route path="/auth/callback"   element={<OAuthCallback />} />
         <Route path="/resources"           element={<Resources />} />
