@@ -208,6 +208,10 @@ body {
 @media (max-width: 860px) {
   .auth-layout { grid-template-columns: 1fr; }
   .auth-brand-panel { display: none; }
+  .auth-form-panel { 
+    padding: var(--space-8) var(--space-6); 
+    width: 100%;
+  }
 }
 
 /* ── Input styling ───────────────────────────────────────────────────────── */

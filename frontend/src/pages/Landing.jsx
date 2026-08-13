@@ -357,7 +357,7 @@ export default function LandingPage() {
 
       {/* ════════════════════ FLOATING PILL NAV (Hallmark N5) ════════════════════ */}
       <header className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 px-4 pointer-events-none">
-        <nav className="pointer-events-auto flex items-center gap-1 rounded-full bg-white/80 backdrop-blur-lg border border-border/50 shadow-lg shadow-ink/[0.04] px-2 py-1.5">
+        <nav className="pointer-events-auto flex items-center justify-between sm:justify-start gap-1 rounded-full bg-white/80 backdrop-blur-lg border border-border/50 shadow-lg shadow-ink/[0.04] px-2 py-1.5 w-full sm:w-auto">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 pl-2 pr-3 group">
             <img
@@ -409,7 +409,7 @@ export default function LandingPage() {
           {/* Mobile hamburger */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-full hover:bg-parchment-lo transition-colors duration-200"
+            className="md:hidden p-2 rounded-full hover:bg-parchment-lo transition-colors duration-200 flex-shrink-0"
             aria-label="Toggle menu"
           >
             {mobileMenuOpen
@@ -455,7 +455,7 @@ export default function LandingPage() {
             Kowalski: Per-word stagger entrance with rotateX, custom ease curves.
             Taste: VARIANCE=7, no generic centered hero.
         ════════════════════════════════════════════════ */}
-        <section ref={heroRef} className="relative pt-32 pb-36 px-6 overflow-hidden min-h-[90vh] flex items-center">
+        <section ref={heroRef} className="relative pt-32 pb-36 px-6 overflow-hidden min-h-[90vh] flex flex-col justify-center">
           {/* Ambient gradient orbs */}
           <div className="hero-glow-1 pointer-events-none absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full opacity-[0.08]" style={{ background: "radial-gradient(circle, #C25539 0%, transparent 70%)" }} />
           <div className="hero-glow-2 pointer-events-none absolute -bottom-48 -right-48 w-[460px] h-[460px] rounded-full opacity-[0.06]" style={{ background: "radial-gradient(circle, #5B7C99 0%, transparent 70%)" }} />
@@ -482,7 +482,7 @@ export default function LandingPage() {
               </p>
 
               {/* CTA group */}
-              <div className="hero-actions flex flex-wrap items-center gap-4 pt-1">
+              <div className="hero-actions flex flex-wrap items-center gap-4 sm:gap-6 pt-1">
                 <Link to="/predict/diabetes">
                   {/* Double-element CTA button (high-end-visual-design Button-in-Button) */}
                   <button
@@ -490,7 +490,7 @@ export default function LandingPage() {
                     style={{ transitionTimingFunction: EASE_OUT_STRONG }}
                   >
                     Start Screening
-                    <span className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 group-hover:translate-x-0.5 transition-all duration-200">
+                    <span className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 group-hover:translate-x-0.5 transition-all duration-200 flex-shrink-0">
                       <ArrowRight className="w-4 h-4" />
                     </span>
                   </button>
@@ -603,7 +603,7 @@ export default function LandingPage() {
         </section>
 
         {/* ════════════════════ ANIMATED STATS RIBBON ════════════════════ */}
-        <section className="stats-row py-14 bg-white border-y border-border">
+        <section className="stats-row py-14 bg-white border-y border-border overflow-hidden">
           <div className="mx-auto max-w-6xl px-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-4">
               {[
@@ -675,7 +675,7 @@ export default function LandingPage() {
                         {/* Feature pills */}
                         <div className="flex flex-wrap gap-1.5 mb-4">
                           {d.features.map((f) => (
-                            <span key={f} className="text-[10px] px-2.5 py-0.5 rounded-full border border-border/50 bg-parchment-hi text-ink-light">
+                            <span key={f} className="text-[10px] px-2.5 py-0.5 rounded-full border border-border/50 bg-parchment-hi text-ink-light whitespace-nowrap">
                               {f}
                             </span>
                           ))}

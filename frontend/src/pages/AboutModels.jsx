@@ -248,8 +248,7 @@ export default function AboutModels() {
         </p>
         <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink mb-2">About the Models</h1>
         <p className="text-ink-light text-sm max-w-xl">
-          TraceHealth uses three independently trained ML models per disease — Logistic Regression,
-          Random Forest, and XGBoost — and compares their results side by side with SHAP explanations.
+          TraceHealth uses three independently trained ML models per disease — Logistic Regression, Random Forest, and XGBoost — and compares their results side by side with SHAP explanations.
         </p>
       </header>
 

@@ -225,7 +225,7 @@ export default function Resources() {
       </header>
 
       {/* Disease tabs */}
-      <div className="flex flex-wrap gap-2 mb-6 sm:mb-8 animate-fade-up overflow-x-auto scrollbar-hide" style={{ animationDelay: "50ms" }}>
+      <div className="flex flex-wrap gap-2 mb-10 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide animate-fade-up" style={{ animationDelay: "50ms" }}>
         {DISEASES.map((d) => (
           <button
             key={d.key}
