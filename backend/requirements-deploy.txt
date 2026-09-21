@@ -4,6 +4,7 @@ uvicorn[standard]==0.30.6
 pydantic==2.8.2
 pydantic-settings==2.4.0
 python-multipart==0.0.9
+email-validator>=2.0.0
 
 # ── Database
 motor==3.5.1
