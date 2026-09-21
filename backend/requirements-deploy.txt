@@ -31,6 +31,7 @@ pdfplumber==0.11.3
 
 # ── Data Export
 weasyprint==62.3
+reportlab>=4.0
 
 # ── Scheduling
 apscheduler==3.10.4
