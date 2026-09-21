@@ -1,3 +1,6 @@
+# ── PyTorch CPU-only index (must be first line) ──
+--extra-index-url https://download.pytorch.org/whl/cpu
+
 # ── Core Framework
 fastapi==0.115.0
 uvicorn[standard]==0.30.6
@@ -26,6 +29,11 @@ joblib==1.4.2
 pandas==2.2.2
 numpy==1.26.4
 
+# ── ML Vision (image predictions — CPU only)
+torch
+torchvision
+pytorch-grad-cam
+
 # ── Document Intelligence
 pdfplumber==0.11.3
 
@@ -38,3 +46,4 @@ apscheduler==3.10.4
 
 # ── Image processing
 Pillow==10.4.0
+
