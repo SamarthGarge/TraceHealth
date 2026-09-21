@@ -2,15 +2,11 @@
 gradcam.py — Grad-CAM heatmap generation for vision model predictions.
 
 All torch/grad-cam imports are deferred inside the function to avoid
-Windows DLL initialisation errors at app startup.
+import errors when torch is not installed (e.g. on Render deployment)
+or Windows DLL initialisation errors at app startup.
 """
 
 from io import BytesIO
-import numpy as np
-from PIL import Image
-from pytorch_grad_cam import GradCAM
-from pytorch_grad_cam.utils.image import show_cam_on_image
-from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 
 from app.utils.logging import get_logger
 
@@ -37,6 +33,12 @@ def generate_gradcam(
     Returns:
         PNG bytes of the heatmap overlay.
     """
+    import numpy as np
+    from PIL import Image
+    from pytorch_grad_cam import GradCAM
+    from pytorch_grad_cam.utils.image import show_cam_on_image
+    from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
+
     target_layer = getattr(model, target_layer_attr, None)
     if target_layer is None:
         raise ValueError(f"Model has no attribute '{target_layer_attr}'")
@@ -57,3 +59,4 @@ def generate_gradcam(
     overlay_img.save(buf, format="PNG")
     buf.seek(0)
     return buf.read()
+

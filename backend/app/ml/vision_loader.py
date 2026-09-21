@@ -2,8 +2,8 @@
 vision_loader.py — Lazy singleton loader for PyTorch vision models.
 
 All torch/torchvision imports are deferred inside functions to avoid
-Windows DLL initialisation errors when the FastAPI app starts without
-a CUDA-compatible GPU driver present.
+import errors when torch is not installed (e.g. on Render deployment)
+or Windows DLL initialisation errors at app startup.
 
 Models are loaded from disk on first inference request, not at app startup.
 
@@ -44,11 +44,8 @@ _MODELS_DIR = Path(__file__).resolve().parent.parent.parent.parent / "models" / 
 TB_MODEL_PATH        = _MODELS_DIR / "tb_xray_model.pt"
 CANCER_CT_MODEL_PATH = _MODELS_DIR / "cancer_ct_model.pt"
 
-import torch
-import torchvision.transforms as transforms
-from torchvision.models import resnet50
-from io import BytesIO
-from PIL import Image
+# NOTE: torch, torchvision, PIL are imported lazily inside functions below
+# to allow the app to start even when torch is not installed.
 
 # ── Class labels ──────────────────────────────────────────────────────────────
 
@@ -70,6 +67,8 @@ def _build_resnet(num_classes: int):
 
 
 def _load(key: str, path: Path, num_classes: int):
+    import torch
+
     if key in _cache:
         return _cache[key]
     
@@ -107,6 +106,10 @@ def preprocess_image(image_bytes: bytes, target_size=(224, 224)):
     """
     Convert raw image bytes to a normalised (1, 3, 224, 224) tensor.
     """
+    import torchvision.transforms as transforms
+    from io import BytesIO
+    from PIL import Image
+
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
@@ -130,3 +133,4 @@ def run_inference(model, tensor) -> tuple[int, list[float]]:
         probs  = torch.softmax(logits, dim=1)[0].tolist()
         pred   = int(torch.argmax(logits, dim=1).item())
     return pred, probs
+
