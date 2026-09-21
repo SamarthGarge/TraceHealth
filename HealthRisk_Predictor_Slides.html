@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TraceHealth — Project Presentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --terra:#B05A37; --terra-dark:#8C3E20;
+    --teal-900:#0A4F4F; --teal-700:#0F6E6E; --teal-500:#3C8F8A;
+    --blue-500:#5B8DB8; --violet-500:#8E6FAF; --amber-500:#D98E04;
+    --bg:#FAF8F5; --card:#FFFFFF; --border:#E8E2DA; --border-light:#F0EBE4;
+    --text-primary:#2C1810; --text-secondary:#6B5C52; --text-muted:#9A8E85;
+    --radius:14px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:'Inter',-apple-system,'Segoe UI',sans-serif;
+    background:#1C0F08;
+    color:var(--text-primary);
+    overflow:hidden;
+  }
+  .deck{ position:relative; width:100vw; height:100vh; }
+  .slide{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; justify-content:flex-start;
+    opacity:0; visibility:hidden; pointer-events:none; transform:translateX(24px);
+    transition:opacity .45s ease, transform .45s ease, visibility 0s linear .45s;
+    padding:5vh 8vw 10vh;
+    background:var(--bg);
+    overflow-y:auto;
+    z-index:0;
+  }
+  .slide.active{
+    opacity:1; visibility:visible; pointer-events:auto; transform:translateX(0);
+    transition:opacity .45s ease, transform .45s ease, visibility 0s linear 0s;
+    z-index:10;
+  }
+  .slide-inner{ max-width:1180px; width:100%; margin:0 auto; }
+
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:11px; font-weight:600; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--terra); margin-bottom:14px;
+  }
+  .eyebrow::before{
+    content:""; width:7px; height:7px; border-radius:50%;
+    background:var(--terra); display:inline-block;
+  }
+  h1{
+    font-family:'Source Serif 4', serif; font-weight:600;
+    line-height:1.05; letter-spacing:-0.01em; color:var(--text-primary);
+  }
+  h2.slide-title{
+    font-family:'Source Serif 4', serif;
+    font-size:clamp(26px,3.2vw,40px); font-weight:600;
+    color:var(--text-primary); margin-bottom:6px; letter-spacing:-0.01em;
+  }
+  .slide-sub{
+    font-size:15px; color:var(--text-secondary); margin-bottom:28px;
+    max-width:800px; line-height:1.6;
+  }
+
+  /* Slide index */
+  .slide-index{
+    position:absolute; top:5vh; right:8vw;
+    font-size:12px; color:var(--text-muted); font-weight:600; letter-spacing:.05em;
+  }
+  .slide-index b{ color:var(--terra); }
+
+  /* Title slide */
+  #slide-0{
+    background:radial-gradient(circle at 18% 22%, #4A2012 0%, #2C1208 55%, #1C0F08 100%);
+    align-items:flex-start; justify-content:center;
+  }
+  #slide-0 .slide-inner{ position:relative; z-index:2; }
+  #slide-0 .eyebrow{ color:#E8A98A; }
+  #slide-0 .eyebrow::before{ background:#E8A98A; }
+  #slide-0 h1{ color:#FAF8F5; font-size:clamp(40px,6vw,78px); margin-bottom:16px; }
+  #slide-0 .accent{ color:#E8A98A; }
+  #slide-0 .tagline{
+    font-size:clamp(15px,1.5vw,19px); color:#D4BFB2; max-width:660px;
+    line-height:1.6; margin-bottom:36px; font-weight:400;
+  }
+  .disease-pills{ display:flex; gap:10px; flex-wrap:wrap; }
+  .disease-pills span{
+    font-size:12px; font-weight:500; padding:7px 14px;
+    border-radius:999px; border:1px solid rgba(232,169,138,0.35);
+    color:#F0D8CC; background:rgba(232,169,138,0.08); letter-spacing:.01em;
+  }
+  .pulse-wrap{
+    position:absolute; left:0; right:0; bottom:0; height:30%;
+    overflow:hidden; z-index:1; opacity:.7;
+  }
+  .pulse-wrap svg{ width:200%; height:100%; animation:driftLine 18s linear infinite; }
+  @keyframes driftLine{ from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+  /* Cards */
+  .card{
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    padding:20px;
+  }
+  .card-grid{ display:grid; gap:14px; }
+  .card-grid.cols-2{ grid-template-columns:repeat(2,1fr); }
+  .card-grid.cols-3{ grid-template-columns:repeat(3,1fr); }
+  .card-grid.cols-4{ grid-template-columns:repeat(4,1fr); }
+  .card h3{ font-size:15px; font-weight:600; margin-bottom:6px; color:var(--text-primary); }
+  .card p{ font-size:13px; color:var(--text-secondary); line-height:1.55; }
+  .card .card-num{
+    font-family:'Source Serif 4',serif; font-size:12px; color:var(--text-muted);
+    margin-bottom:8px; display:block; font-weight:600;
+  }
+  .card-accent{ border-left:3px solid var(--terra); }
+
+  /* Lists */
+  .bullet-list{ list-style:none; padding:0; }
+  .bullet-list li{
+    font-size:13.5px; color:var(--text-secondary); line-height:1.6;
+    padding:6px 0 6px 20px; position:relative;
+  }
+  .bullet-list li::before{
+    content:""; width:6px; height:6px; border-radius:50%;
+    background:var(--terra); position:absolute; left:0; top:13px;
+  }
+  .bullet-list li strong{ color:var(--text-primary); font-weight:600; }
+
+  /* Tables */
+  .data-table{
+    width:100%; border-collapse:collapse; font-size:13px;
+  }
+  .data-table th{
+    text-align:left; padding:10px 12px; background:var(--terra);
+    color:#fff; font-weight:600; font-size:12px;
+    letter-spacing:.04em; text-transform:uppercase;
+  }
+  .data-table th:first-child{ border-radius:var(--radius) 0 0 0; }
+  .data-table th:last-child{ border-radius:0 var(--radius) 0 0; }
+  .data-table td{
+    padding:10px 12px; border-bottom:1px solid var(--border-light);
+    color:var(--text-secondary); line-height:1.5;
+  }
+  .data-table tr:last-child td{ border-bottom:none; }
+  .data-table td strong{ color:var(--text-primary); }
+
+  /* Chips */
+  .chip{
+    font-size:12px; font-weight:500; padding:6px 12px; border-radius:8px;
+    background:#F0EBE4; color:var(--text-primary); border:1px solid var(--border);
+    display:inline-block;
+  }
+  .chip-row{ display:flex; flex-wrap:wrap; gap:8px; }
+
+  /* Flow */
+  .method-flow{ display:flex; align-items:stretch; gap:0; margin-bottom:24px; flex-wrap:wrap; }
+  .flow-step{
+    flex:1; min-width:140px; background:var(--card); border:1px solid var(--border);
+    padding:16px 14px;
+  }
+  .flow-step:first-child{ border-radius:var(--radius) 0 0 var(--radius); }
+  .flow-step:last-child{ border-radius:0 var(--radius) var(--radius) 0; }
+  .flow-step:not(:last-child){ border-right:none; }
+  .flow-step .fnum{ font-size:10px; font-weight:700; color:var(--terra); letter-spacing:.08em; }
+  .flow-step h4{ font-size:13.5px; font-weight:600; margin:4px 0 3px; color:var(--text-primary); }
+  .flow-step p{ font-size:12px; color:var(--text-secondary); line-height:1.5; }
+
+  /* Two column */
+  .two-col{ display:grid; grid-template-columns:1fr 1fr; gap:30px; align-items:start; }
+
+  /* Metric panel */
+  .metric-panel{
+    background:var(--terra-dark); border-radius:var(--radius); padding:24px 22px; color:#FAF8F5;
+  }
+  .metric-panel .mp-title{
+    font-size:11px; text-transform:uppercase; letter-spacing:.1em;
+    color:#E8A98A; margin-bottom:14px; font-weight:600;
+  }
+  .metric-row{
+    display:flex; justify-content:space-between; align-items:baseline;
+    padding:9px 0; border-bottom:1px solid rgba(255,255,255,0.1);
+  }
+  .metric-row:last-child{ border-bottom:none; }
+  .metric-row .m-label{ font-size:12.5px; color:#D4BFB2; }
+  .metric-row .m-val{ font-family:'Source Serif 4',serif; font-size:18px; font-weight:600; color:#FAF8F5; }
+
+  /* Problem cards */
+  .pcard{
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    padding:16px 18px; display:flex; gap:12px; align-items:flex-start;
+  }
+  .pcard .dot{ width:7px; height:7px; border-radius:50%; margin-top:6px; flex-shrink:0; }
+  .pcard p{ font-size:13.5px; color:var(--text-secondary); line-height:1.55; }
+  .pcard strong{ color:var(--text-primary); font-weight:600; }
+
+  /* Description text */
+  .desc-text{
+    font-size:14px; color:var(--text-secondary); line-height:1.7;
+    max-width:960px; column-count:2; column-gap:36px;
+  }
+  .desc-text.single-col{ column-count:1; }
+
+  /* Use case */
+  .uc-actor{
+    font-size:14px; font-weight:700; color:var(--terra-dark);
+    margin:18px 0 8px; padding-bottom:4px;
+    border-bottom:2px solid var(--terra);
+    display:inline-block;
+  }
+  .uc-actor:first-child{ margin-top:0; }
+  .uc-list{ list-style:none; padding:0; }
+  .uc-list li{
+    font-size:13px; color:var(--text-secondary); padding:4px 0 4px 22px;
+    position:relative; line-height:1.5;
+  }
+  .uc-list li::before{
+    content:"→"; position:absolute; left:2px; color:var(--terra); font-weight:700;
+  }
+
+  /* Gantt */
+  .gantt-row{
+    display:flex; align-items:center; gap:0; margin-bottom:3px;
+  }
+  .gantt-label{
+    width:180px; flex-shrink:0; font-size:11.5px; color:var(--text-secondary);
+    text-align:right; padding-right:12px; font-weight:500;
+  }
+  .gantt-track{
+    flex:1; height:22px; background:var(--border-light); border-radius:4px;
+    position:relative; overflow:hidden;
+  }
+  .gantt-bar{
+    position:absolute; top:2px; bottom:2px; border-radius:3px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:9px; font-weight:600; color:#fff; letter-spacing:.03em;
+  }
+
+  /* Nav */
+  .nav-controls{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    display:flex; align-items:center; gap:14px; z-index:50;
+    background:rgba(255,255,255,0.9); backdrop-filter:blur(8px);
+    padding:8px 16px; border-radius:999px; border:1px solid var(--border);
+    box-shadow:0 4px 18px rgba(0,0,0,0.08);
+  }
+  .nav-btn{
+    width:32px; height:32px; border-radius:50%; border:none; cursor:pointer;
+    background:var(--terra); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    transition:background .2s ease, transform .15s ease;
+  }
+  .nav-btn:hover{ background:var(--terra-dark); transform:scale(1.06); }
+  .nav-btn:disabled{ background:#C9B8AF; cursor:default; transform:none; }
+  .dots{ display:flex; gap:6px; }
+  .dots button{
+    width:7px; height:7px; border-radius:50%; border:none;
+    background:#D4C4BA; cursor:pointer; padding:0; transition:all .2s ease;
+  }
+  .dots button.active{ background:var(--terra); width:20px; border-radius:5px; }
+
+  @media (max-width:860px){
+    .two-col, .card-grid.cols-2, .card-grid.cols-3, .card-grid.cols-4{ grid-template-columns:1fr; }
+    .method-flow{ flex-direction:column; }
+    .flow-step{ border-radius:0 !important; border-right:1px solid var(--border) !important; border-bottom:none;}
+    .flow-step:first-child{ border-radius:var(--radius) var(--radius) 0 0 !important; }
+    .flow-step:last-child{ border-radius:0 0 var(--radius) var(--radius) !important; border-bottom:1px solid var(--border) !important;}
+    .desc-text{ column-count:1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="deck">
+
+  <!-- ════════════ SLIDE 0 — TITLE ════════════ -->
+  <section class="slide active" id="slide-0">
+    <div class="pulse-wrap">
+      <svg viewBox="0 0 1600 300" preserveAspectRatio="none">
+        <polyline points="0,150 120,150 150,150 175,60 200,240 225,150 260,150 420,150 450,150 475,90 500,210 525,150 560,150 720,150 750,150 775,40 800,260 825,150 860,150 1020,150 1050,150 1075,90 1100,210 1125,150 1160,150 1320,150 1350,150 1375,60 1400,240 1425,150 1460,150 1600,150"
+              fill="none" stroke="#8C3E20" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="slide-inner">
+      <div class="eyebrow">Applied Machine Learning · Healthcare Screening</div>
+      <h1>Trace<span class="accent">Health</span></h1>
+      <p class="tagline">An explainable, multi-disease risk screening platform — combining tuned ML models, SHAP-based reasoning, a React + FastAPI full-stack architecture, and MongoDB-backed user management. Deployable on free tiers at zero cost.</p>
+      <div class="disease-pills">
+        <span>Diabetes</span><span>Heart Disease</span><span>Tuberculosis</span><span>Lung Cancer</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 1 — 2.1 Project Definition ════════════ -->
+  <section class="slide" id="slide-1">
+    <div class="slide-index"><b>2.1</b> Project Definition</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Project Profile</div>
+      <h2 class="slide-title">TraceHealth — Explainable AI Health Risk Screening</h2>
+      <p class="slide-sub">A full-stack web application for multi-disease risk prediction using explainable machine learning.</p>
+      <div class="two-col">
+        <div>
+          <table class="data-table">
+            <tr><td><strong>Project Title</strong></td><td>TraceHealth — Explainable AI Health Risk Screening Platform</td></tr>
+            <tr><td><strong>Domain</strong></td><td>Healthcare / Machine Learning / Web Application</td></tr>
+            <tr><td><strong>Platform</strong></td><td>Web (Cross-browser, Responsive)</td></tr>
+            <tr><td><strong>Frontend</strong></td><td>React 18 + Vite + Tailwind CSS</td></tr>
+            <tr><td><strong>Backend</strong></td><td>FastAPI (Python) + Uvicorn</td></tr>
+            <tr><td><strong>Database</strong></td><td>MongoDB Atlas (Cloud)</td></tr>
+            <tr><td><strong>ML Stack</strong></td><td>scikit-learn, XGBoost, SHAP</td></tr>
+            <tr><td><strong>Deployment</strong></td><td>Vercel (Frontend) + Render (Backend)</td></tr>
+          </table>
+        </div>
+        <div class="metric-panel">
+          <div class="mp-title">Diseases Covered</div>
+          <div class="metric-row"><span class="m-label">Diabetes Mellitus</span><span class="m-val">8 features</span></div>
+          <div class="metric-row"><span class="m-label">Heart Disease</span><span class="m-val">9 features</span></div>
+          <div class="metric-row"><span class="m-label">Tuberculosis</span><span class="m-val">15 features</span></div>
+          <div class="metric-row"><span class="m-label">Lung Cancer</span><span class="m-val">15 features</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 2 — 2.2 Project Description ════════════ -->
+  <section class="slide" id="slide-2">
+    <div class="slide-index"><b>2.2</b> Project Description</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Project Description</div>
+      <h2 class="slide-title">What TraceHealth does and why it matters</h2>
+      <div class="desc-text">
+        <p>TraceHealth is a full-stack, explainable AI-powered health risk screening platform that allows users to assess their risk for four major diseases — Diabetes, Heart Disease, Tuberculosis, and Lung Cancer — using validated machine learning models. Unlike traditional "black-box" health prediction tools, TraceHealth pairs every prediction with SHAP (SHapley Additive exPlanations)-based reasoning, enabling users to understand exactly which health parameters drove their risk score and by how much.</p>
+        <p style="margin-top:12px">The platform employs three distinct ML algorithms — Logistic Regression, Random Forest, and XGBoost — for each disease, running all three simultaneously and presenting a side-by-side comparison. An ensemble average provides a balanced overall risk level (Low, Moderate, or High), while individual model results let medically literate users or practitioners examine algorithmic consensus or disagreement.</p>
+        <p style="margin-top:12px">On the backend, TraceHealth is built with FastAPI (Python), serving a REST API with JWT-based authentication, role-based access control (user/admin), Google OAuth integration, and password reset via Gmail SMTP. The frontend is a modern single-page application built with React 18, Vite, React Router, Zustand for state management, and GSAP for premium animations. Data is persisted in MongoDB Atlas using Motor (async driver), with GridFS for secure medical file uploads.</p>
+        <p style="margin-top:12px">Key features include: prediction history with full SHAP detail, a rule-based symptom checker triage wizard, secure medical file upload and AI-powered report analysis, data export in CSV/JSON/PDF formats, an admin dashboard with platform-wide statistics, and a responsive editorial design optimized for both desktop and mobile. The platform is designed for free-tier deployment on Vercel (frontend) and Render (backend), making it accessible to students, researchers, and low-resource clinics without any hosting costs.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 3 — 2.3 Existing Systems ════════════ -->
+  <section class="slide" id="slide-3">
+    <div class="slide-index"><b>2.3</b> Existing Systems</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Existing System Study</div>
+      <h2 class="slide-title">Three similar systems and their limitations</h2>
+      <p class="slide-sub">An analysis of existing health prediction tools and the manual working environment.</p>
+      <div class="card-grid cols-3">
+        <div class="card card-accent">
+          <span class="card-num">System 1</span>
+          <h3>ADA Health Symptom Checker</h3>
+          <p>Conversational AI-based symptom assessment. Covers many conditions but provides no ML model transparency, no SHAP explanations, and no prediction history. Users cannot compare algorithms or export results.</p>
+        </div>
+        <div class="card card-accent">
+          <span class="card-num">System 2</span>
+          <h3>WebMD Symptom Checker</h3>
+          <p>Rule-based symptom matching tool. Provides possible conditions but offers no quantitative risk scoring, no ML predictions, no explainability, and no personalized history tracking or data export capabilities.</p>
+        </div>
+        <div class="card card-accent">
+          <span class="card-num">System 3</span>
+          <h3>Kaggle ML Notebooks</h3>
+          <p>Individual disease prediction notebooks (Diabetes, Heart) exist as isolated experiments. They lack a unified UI, authentication, history persistence, SHAP integration, and are not deployed as usable web applications.</p>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h3>Manual Working Environment</h3>
+        <p>In the manual process, patients visit multiple specialist clinics for each disease screening. Lab reports are collected on paper, risk assessment relies entirely on physician intuition, results are siloed across departments, and there is no centralized platform for patients to track their health risk trends over time. This fragmented approach is time-consuming, expensive, and inaccessible to populations in remote areas.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 4 — 2.4 Problem Statements ════════════ -->
+  <section class="slide" id="slide-4">
+    <div class="slide-index"><b>2.4</b> Problem Statements</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Problem Statements</div>
+      <h2 class="slide-title">Core problems this system solves</h2>
+      <p class="slide-sub">Chronic and infectious diseases share a common gap between the data that predicts them and the tools people can actually use.</p>
+      <div class="card-grid cols-2">
+        <div class="pcard"><span class="dot" style="background:var(--terra)"></span>
+          <p><strong>Siloed screening.</strong> Diabetes, heart disease, TB, and lung cancer risk are assessed by separate, disconnected tools — no single, consistent screening experience exists for multiple diseases.</p>
+        </div>
+        <div class="pcard"><span class="dot" style="background:var(--blue-500)"></span>
+          <p><strong>Black-box predictions.</strong> Most ML risk scores arrive with no reasoning attached, which limits trust and makes it impossible for users or doctors to understand <em>why</em> a result was high or low.</p>
+        </div>
+        <div class="pcard"><span class="dot" style="background:var(--violet-500)"></span>
+          <p><strong>No historical tracking.</strong> Users cannot track how their health risk evolves over time, compare previous screenings, or detect trends in their risk factors across multiple assessments.</p>
+        </div>
+        <div class="pcard"><span class="dot" style="background:var(--amber-500)"></span>
+          <p><strong>Resource-heavy deployment.</strong> Production-grade health apps require expensive cloud infrastructure, putting usable tools out of reach for students, researchers, and low-resource clinics.</p>
+        </div>
+        <div class="pcard"><span class="dot" style="background:var(--teal-700)"></span>
+          <p><strong>No data portability.</strong> Users cannot export their health screening data in standard formats (CSV, JSON, PDF) to share with healthcare providers or maintain personal health records.</p>
+        </div>
+        <div class="pcard"><span class="dot" style="background:#C54B6C"></span>
+          <p><strong>Limited accessibility.</strong> Existing tools are often desktop-only, require technical ML knowledge, or lack responsive design for mobile access in field healthcare settings.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 5 — 2.5 Need for New System ════════════ -->
+  <section class="slide" id="slide-5">
+    <div class="slide-index"><b>2.5</b> Need for New System</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Need for New System</div>
+      <h2 class="slide-title">Why a new system is necessary</h2>
+      <p class="slide-sub">Strong technical and social reasons to build TraceHealth from the ground up.</p>
+      <div class="card-grid cols-2">
+        <div class="card"><h3>🏥 Unified Multi-Disease Platform</h3><p>No existing free tool provides a single interface to screen for Diabetes, Heart Disease, TB, and Lung Cancer simultaneously with consistent UX and methodology.</p></div>
+        <div class="card"><h3>🔍 Explainability Gap</h3><p>SHAP-based per-prediction explanations are virtually absent in consumer health tools. Users deserve to know <em>why</em> their risk is what it is, not just the number.</p></div>
+        <div class="card"><h3>📊 Multi-Model Transparency</h3><p>Running 3 different algorithms (LR, RF, XGBoost) and showing results side-by-side gives users and clinicians unprecedented model transparency and consensus validation.</p></div>
+        <div class="card"><h3>💰 Zero-Cost Deployment</h3><p>Built specifically for free-tier hosting (Vercel + Render + MongoDB Atlas M0), making it deployable by students and NGOs without any infrastructure budget.</p></div>
+        <div class="card"><h3>📱 Mobile-First Design</h3><p>Fully responsive editorial design works on mobile phones in field healthcare settings, unlike desktop-only research notebooks and Streamlit prototypes.</p></div>
+        <div class="card"><h3>🔒 Privacy by Design</h3><p>GDPR-style data consent, httpOnly JWT cookies, role-based access, and ownership-enforced data isolation — a level of security absent in prototype health tools.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 6 — 2.6 Proposed System & Features ════════════ -->
+  <section class="slide" id="slide-6">
+    <div class="slide-index"><b>2.6</b> Proposed System &amp; Features</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Proposed System</div>
+      <h2 class="slide-title">Modules, features, and functionalities</h2>
+      <p class="slide-sub">11 major modules comprising 27+ screens and 40+ API endpoints.</p>
+      <div class="card-grid cols-3">
+        <div class="card"><span class="card-num">M1</span><h3>Authentication</h3><p>Email/password signup & login, Google OAuth, JWT access + refresh tokens (httpOnly cookies), password reset via Gmail SMTP, admin login.</p></div>
+        <div class="card"><span class="card-num">M2</span><h3>Disease Prediction</h3><p>Run predictions for 4 diseases using 3 ML models simultaneously. Input validation, feature preprocessing, ensemble averaging, risk classification.</p></div>
+        <div class="card"><span class="card-num">M3</span><h3>SHAP Explainability</h3><p>Per-prediction SHAP feature attribution for every model. Top contributors shown as interactive bar charts with direction indicators.</p></div>
+        <div class="card"><span class="card-num">M4</span><h3>Prediction History</h3><p>Paginated history with disease filter. Full detail view with SHAP breakdown. Delete individual predictions. Ownership-enforced access.</p></div>
+        <div class="card"><span class="card-num">M5</span><h3>Symptom Checker</h3><p>Rule-based triage wizard with weighted symptom scoring. Produces referral suggestions per disease to guide which prediction to run.</p></div>
+        <div class="card"><span class="card-num">M6</span><h3>File Upload &amp; Analysis</h3><p>Secure GridFS upload (PDF, PNG, JPEG, CSV). Magic-byte validation, 10MB limit. AI-powered report analysis for uploaded medical documents.</p></div>
+        <div class="card"><span class="card-num">M7</span><h3>Data Export</h3><p>Export predictions as CSV, JSON, or professional PDF reports. Date range filtering, per-prediction or bulk export. WeasyPrint PDF generation.</p></div>
+        <div class="card"><span class="card-num">M8</span><h3>Admin Dashboard</h3><p>Platform-wide stats (user count, prediction count, disease distribution). Browse all users, view user details, recent predictions.</p></div>
+        <div class="card"><span class="card-num">M9</span><h3>User Management</h3><p>Profile editing, account deletion, data consent management. Role-based access control (user/admin). Secure password hashing (bcrypt).</p></div>
+        <div class="card"><span class="card-num">M10</span><h3>Health Resources</h3><p>Curated disease-wise links to WHO, CDC, AHA, and other authoritative sources. Tabbed interface with resource type badges.</p></div>
+        <div class="card"><span class="card-num">M11</span><h3>Model Transparency</h3><p>About Models page showing training methodology, accuracy metrics, dataset sources, and feature lists for all 12 trained models.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 7 — 2.7 Scope ════════════ -->
+  <section class="slide" id="slide-7">
+    <div class="slide-index"><b>2.7</b> Scope</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Scope</div>
+      <h2 class="slide-title">Where, how, by whom, and when</h2>
+      <p class="slide-sub">Defining the boundaries and applicability of TraceHealth.</p>
+      <div class="card-grid cols-2">
+        <div class="card card-accent">
+          <h3>👤 Who Can Use It</h3>
+          <p><strong>General Public:</strong> Anyone can run predictions and symptom checks without login. <strong>Registered Users:</strong> Create accounts to save history, upload files, and export data. <strong>Healthcare Workers:</strong> Use as a preliminary screening aid in rural clinics. <strong>Students/Researchers:</strong> Study ML explainability and multi-model comparison. <strong>Administrators:</strong> Monitor platform usage and user activity.</p>
+        </div>
+        <div class="card card-accent">
+          <h3>🌍 Where It Can Be Used</h3>
+          <p>Accessible globally via any modern web browser (Chrome, Firefox, Safari, Edge). Responsive design supports desktop, tablet, and mobile. Deployable on free cloud tiers for NGOs, academic institutions, rural health centers, and individual health-conscious users worldwide.</p>
+        </div>
+        <div class="card card-accent">
+          <h3>⚙️ How It Works</h3>
+          <p>Users enter health parameters → 3 ML models run simultaneously → SHAP explains each prediction → Results are displayed with risk levels. Authenticated users get history tracking, file upload, and data export. Admin gets a platform-wide dashboard.</p>
+        </div>
+        <div class="card card-accent">
+          <h3>⏰ When to Use</h3>
+          <p>Pre-clinical screening before doctor visits. Regular health self-assessments. After receiving lab results to understand risk implications. As a teaching tool in medical/ML education. As a reference implementation for explainable AI in healthcare.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 8 — 2.8 Outcomes ════════════ -->
+  <section class="slide" id="slide-8">
+    <div class="slide-index"><b>2.8</b> Outcomes</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Expected Outcomes</div>
+      <h2 class="slide-title">Benefits once the system is deployed</h2>
+      <div class="two-col">
+        <ul class="bullet-list">
+          <li><strong>12 trained ML models</strong> (3 per disease × 4 diseases) meeting or exceeding accuracy benchmarks, with honest metrics reporting.</li>
+          <li><strong>A live, deployed full-stack application</strong> with premium editorial design, sub-2-second predictions, and SHAP-powered explanations.</li>
+          <li><strong>Transparent, comparable predictions</strong> — every result explained via SHAP and checked against all 3 trained algorithms side-by-side.</li>
+          <li><strong>Zero-cost public deployment</strong> on Vercel + Render + MongoDB Atlas free tiers, proving enterprise-quality healthcare AI is accessible to all.</li>
+          <li><strong>GDPR-style privacy</strong> with explicit data consent, httpOnly cookies, bcrypt hashing, and ownership-enforced data isolation.</li>
+          <li><strong>Portfolio-grade demonstration</strong> of the full applied ML lifecycle: data → training → explainability → API → UI → deployment.</li>
+          <li><strong>Professional PDF health reports</strong> for users to share with their healthcare providers.</li>
+        </ul>
+        <div class="metric-panel">
+          <div class="mp-title">Target Benchmarks</div>
+          <div class="metric-row"><span class="m-label">Diabetes — Accuracy</span><span class="m-val">≥ 78%</span></div>
+          <div class="metric-row"><span class="m-label">Heart Disease — Accuracy</span><span class="m-val">≥ 82%</span></div>
+          <div class="metric-row"><span class="m-label">TB & Lung Cancer — CV Accuracy</span><span class="m-val">> 80%</span></div>
+          <div class="metric-row"><span class="m-label">Prediction + SHAP render</span><span class="m-val">≤ 2s</span></div>
+          <div class="metric-row"><span class="m-label">API Endpoints</span><span class="m-val">40+</span></div>
+          <div class="metric-row"><span class="m-label">Hosting Cost</span><span class="m-val">$0/mo</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 9 — 2.9 Tools & Technology ════════════ -->
+  <section class="slide" id="slide-9">
+    <div class="slide-index"><b>2.9</b> Tools &amp; Technology</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Tools &amp; Technology</div>
+      <h2 class="slide-title">Technology stack with justification</h2>
+      <table class="data-table">
+        <thead>
+          <tr><th>Layer</th><th>Technology</th><th>Justification</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Frontend</strong></td><td>React 18 + Vite</td><td>Component-based architecture, fast HMR, code-splitting, largest ecosystem for SPAs.</td></tr>
+          <tr><td><strong>Styling</strong></td><td>Tailwind CSS + Custom CSS</td><td>Utility-first rapid prototyping with custom design tokens for premium editorial aesthetics.</td></tr>
+          <tr><td><strong>State</strong></td><td>Zustand + React Query</td><td>Lightweight global state (Zustand) + server-state caching and refetching (React Query).</td></tr>
+          <tr><td><strong>Animation</strong></td><td>GSAP</td><td>Industry-standard animation library for scroll-triggered and interaction micro-animations.</td></tr>
+          <tr><td><strong>Backend</strong></td><td>FastAPI (Python)</td><td>Async-native, auto-generated OpenAPI docs, Pydantic validation, fastest Python framework.</td></tr>
+          <tr><td><strong>Database</strong></td><td>MongoDB Atlas + Motor</td><td>Flexible schema for varied disease features, free M0 tier, async driver for FastAPI.</td></tr>
+          <tr><td><strong>File Storage</strong></td><td>MongoDB GridFS</td><td>No separate S3 bucket needed — files stored alongside data in same DB cluster.</td></tr>
+          <tr><td><strong>Auth</strong></td><td>JWT (python-jose) + bcrypt</td><td>Stateless auth, httpOnly cookies, no third-party auth service dependency.</td></tr>
+          <tr><td><strong>ML</strong></td><td>scikit-learn + XGBoost</td><td>Production-proven, lightweight tabular classifiers. Serialized to ~12MB total with joblib.</td></tr>
+          <tr><td><strong>Explainability</strong></td><td>SHAP</td><td>Gold-standard for ML interpretability — TreeExplainer for RF/XGB, LinearExplainer for LR.</td></tr>
+          <tr><td><strong>PDF Export</strong></td><td>WeasyPrint</td><td>Python-native HTML→PDF engine for generating professional medical reports.</td></tr>
+          <tr><td><strong>Deployment</strong></td><td>Vercel + Render</td><td>Free tiers with auto-deploy from GitHub, HTTPS, global CDN (Vercel), Python support (Render).</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 10 — 2.10 Project Plan ════════════ -->
+  <section class="slide" id="slide-10">
+    <div class="slide-index"><b>2.10</b> Project Plan</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Project Plan &amp; Timeline</div>
+      <h2 class="slide-title">Development phases and milestones</h2>
+      <table class="data-table" style="margin-bottom:20px">
+        <thead><tr><th>Phase</th><th>Task</th><th>Duration</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Phase 1</strong></td><td>Data Collection, Cleaning, EDA</td><td>Week 1–2</td><td>✅ Complete</td></tr>
+          <tr><td><strong>Phase 2</strong></td><td>Model Training & Evaluation (LR, RF, XGB × 4 diseases)</td><td>Week 3–4</td><td>✅ Complete</td></tr>
+          <tr><td><strong>Phase 3</strong></td><td>Backend API: Auth, Prediction, History endpoints</td><td>Week 5–6</td><td>✅ Complete</td></tr>
+          <tr><td><strong>Phase 4</strong></td><td>Frontend: Landing, Auth pages, Predict UI</td><td>Week 7–8</td><td>✅ Complete</td></tr>
+          <tr><td><strong>Phase 5</strong></td><td>File Upload (GridFS) + AI Report Analysis</td><td>Week 9</td><td>✅ Complete</td></tr>
+          <tr><td><strong>Phase 6</strong></td><td>SHAP Integration + Interactive Charts</td><td>Week 10</td><td>✅ Complete</td></tr>
+          <tr><td><strong>Phase 7</strong></td><td>Symptom Checker + Resources + About Models</td><td>Week 11</td><td>✅ Complete</td></tr>
+          <tr><td><strong>Phase 8</strong></td><td>Export (CSV/JSON/PDF) + Admin Dashboard</td><td>Week 12</td><td>✅ Complete</td></tr>
+          <tr><td><strong>Phase 9</strong></td><td>Responsive Design, Testing & Bug Fixes</td><td>Week 13–14</td><td>✅ Complete</td></tr>
+          <tr><td><strong>Phase 10</strong></td><td>Deployment (Vercel + Render) + Documentation</td><td>Week 15</td><td>🔄 In Progress</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:8px">
+        <div class="gantt-row"><span class="gantt-label">Data & EDA</span><div class="gantt-track"><div class="gantt-bar" style="left:0;width:13%;background:var(--terra)">W1-2</div></div></div>
+        <div class="gantt-row"><span class="gantt-label">Model Training</span><div class="gantt-track"><div class="gantt-bar" style="left:13%;width:13%;background:var(--blue-500)">W3-4</div></div></div>
+        <div class="gantt-row"><span class="gantt-label">Backend API</span><div class="gantt-track"><div class="gantt-bar" style="left:26%;width:13%;background:var(--violet-500)">W5-6</div></div></div>
+        <div class="gantt-row"><span class="gantt-label">Frontend UI</span><div class="gantt-track"><div class="gantt-bar" style="left:40%;width:13%;background:var(--amber-500)">W7-8</div></div></div>
+        <div class="gantt-row"><span class="gantt-label">Upload + Analysis</span><div class="gantt-track"><div class="gantt-bar" style="left:53%;width:7%;background:var(--teal-700)">W9</div></div></div>
+        <div class="gantt-row"><span class="gantt-label">SHAP + Charts</span><div class="gantt-track"><div class="gantt-bar" style="left:60%;width:7%;background:#C54B6C">W10</div></div></div>
+        <div class="gantt-row"><span class="gantt-label">Symptom + Resources</span><div class="gantt-track"><div class="gantt-bar" style="left:67%;width:7%;background:var(--terra)">W11</div></div></div>
+        <div class="gantt-row"><span class="gantt-label">Export + Admin</span><div class="gantt-track"><div class="gantt-bar" style="left:74%;width:7%;background:var(--blue-500)">W12</div></div></div>
+        <div class="gantt-row"><span class="gantt-label">Responsive + Testing</span><div class="gantt-track"><div class="gantt-bar" style="left:80%;width:13%;background:var(--violet-500)">W13-14</div></div></div>
+        <div class="gantt-row"><span class="gantt-label">Deploy + Docs</span><div class="gantt-track"><div class="gantt-bar" style="left:93%;width:7%;background:var(--amber-500)">W15</div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 11 — 3.1 Feasibility Study ════════════ -->
+  <section class="slide" id="slide-11">
+    <div class="slide-index"><b>3.1</b> Feasibility Study</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Requirement Analysis</div>
+      <h2 class="slide-title">Feasibility Study</h2>
+      <div class="card-grid cols-2">
+        <div class="card card-accent">
+          <h3>🔧 Technical Feasibility</h3>
+          <p>All technologies used (React, FastAPI, MongoDB, scikit-learn, XGBoost, SHAP) are mature, open-source, and well-documented. The team has working proficiency in Python and JavaScript. Pre-trained models are serialized to lightweight joblib files (~12MB total). The full-stack architecture has been validated locally with all 40+ API endpoints functional and tested.</p>
+        </div>
+        <div class="card card-accent">
+          <h3>💰 Economic Feasibility</h3>
+          <p>The entire project runs on free tiers: Vercel (frontend CDN), Render (backend hosting), MongoDB Atlas M0 (512MB cloud DB), and Gmail SMTP (password reset emails). Total development cost is $0. No paid licenses, no proprietary software. All ML training datasets are publicly available from UCI/Kaggle repositories.</p>
+        </div>
+        <div class="card card-accent">
+          <h3>⚙️ Operational Feasibility</h3>
+          <p>The system requires no training to operate — users simply enter health parameters and receive results. The editorial UI design with clear visual hierarchy ensures usability for non-technical users. Auto-deploy from GitHub means zero-downtime updates. Admin dashboard provides operational monitoring without server access.</p>
+        </div>
+        <div class="card card-accent">
+          <h3>🌍 Social Feasibility</h3>
+          <p>TraceHealth promotes health awareness and early disease detection. It is designed to be socially inclusive: free access, responsive for mobile (reaching rural populations), multilingual-ready architecture, and GDPR-style consent ensuring ethical data handling. SHAP explanations empower users rather than creating dependency on opaque AI.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 12 — 3.2 Users of the System ════════════ -->
+  <section class="slide" id="slide-12">
+    <div class="slide-index"><b>3.2</b> Users of the System</div>
+    <div class="slide-inner">
+      <div class="eyebrow">User Roles</div>
+      <h2 class="slide-title">Roles, rights, and responsibilities</h2>
+      <table class="data-table">
+        <thead><tr><th>Role</th><th>Rights</th><th>Responsibilities</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Guest (Unauthenticated)</strong></td>
+            <td>View landing page, run predictions (no saving), use symptom checker, view resources, view about models, signup/login</td>
+            <td>Provide accurate health data for meaningful predictions. Understand that results are not saved without account creation.</td>
+          </tr>
+          <tr>
+            <td><strong>Registered User</strong></td>
+            <td>All guest rights + save prediction history, view/delete history, upload medical files, export data (CSV/JSON/PDF), edit profile, manage data consent, delete account</td>
+            <td>Maintain accurate health information. Manage data consent preferences. Responsible for the accuracy of uploaded medical documents.</td>
+          </tr>
+          <tr>
+            <td><strong>Admin</strong></td>
+            <td>All user rights + view platform statistics, browse all users, view user details, view recent predictions across all users</td>
+            <td>Monitor platform health and usage. Ensure data integrity. Oversee system performance. Admin accounts are seeded via environment variables (not self-registerable).</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 13 — 3.3 System Modules ════════════ -->
+  <section class="slide" id="slide-13">
+    <div class="slide-index"><b>3.3</b> System Modules</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Module Breakdown</div>
+      <h2 class="slide-title">Detailed module descriptions</h2>
+      <div class="card-grid cols-2">
+        <div class="card"><h3>🔐 Authentication Module</h3><p>Handles signup (name, email, password, consent), login (email/password + Google OAuth), logout, JWT token management (access + refresh), password reset via email (Gmail SMTP), and admin login with role elevation.</p></div>
+        <div class="card"><h3>🧠 Prediction Engine</h3><p>Core ML pipeline: accepts disease key + feature dict, validates inputs against model metadata, preprocesses (scales) features, runs 3 models (LR, RF, XGB), computes SHAP attributions, calculates ensemble average, and classifies risk level. Saves to history if user is authenticated and consented.</p></div>
+        <div class="card"><h3>📋 Symptom Checker</h3><p>Rule-based triage wizard. User answers yes/no symptom questions. System applies weighted scoring per disease, normalizes to 0–100, and returns referral suggestions ranked by relevance with actionable reasons.</p></div>
+        <div class="card"><h3>📁 File Upload & Analysis</h3><p>Secure medical file upload via GridFS (PDF, PNG, JPEG, CSV). Magic-byte MIME validation, 10MB limit, filename sanitization. AI-powered analysis extracts health data from uploaded reports for interpretation.</p></div>
+        <div class="card"><h3>📊 Export & Reporting</h3><p>Exports prediction history in CSV, JSON, or professional PDF format. Supports date range filtering, disease filtering, and single-prediction export. PDF generated with WeasyPrint using HTML templates.</p></div>
+        <div class="card"><h3>🛡️ Admin Dashboard</h3><p>Platform-wide stats: total users, total predictions, predictions by disease, recent activity. Paginated user list with search. Individual user detail view. Recent predictions feed across all users.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 14 — 3.4 Process Model ════════════ -->
+  <section class="slide" id="slide-14">
+    <div class="slide-index"><b>3.4</b> Process Model</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Development Strategy</div>
+      <h2 class="slide-title">Agile (Scrum) Process Model</h2>
+      <p class="slide-sub">TraceHealth follows the Agile methodology with Scrum-based sprints. This is ideal because the project evolved iteratively — from a Streamlit prototype to a full-stack React + FastAPI application.</p>
+      <div class="two-col">
+        <div>
+          <h3 style="font-size:15px;margin-bottom:12px">Why Agile Scrum?</h3>
+          <ul class="bullet-list">
+            <li><strong>Iterative delivery:</strong> Each phase (data → model → API → UI) delivered a working increment.</li>
+            <li><strong>Changing requirements:</strong> The project evolved from 4 slides (initial proposal) to 11 modules with 27+ screens.</li>
+            <li><strong>Continuous feedback:</strong> Browser-based testing after each sprint enabled rapid UI/UX iteration.</li>
+            <li><strong>Risk management:</strong> ML model accuracy was validated early (Phase 2) before building the full UI.</li>
+            <li><strong>Parallel work streams:</strong> Frontend and backend could be developed concurrently with API contracts.</li>
+          </ul>
+        </div>
+        <div>
+          <h3 style="font-size:15px;margin-bottom:12px">Sprint Breakdown</h3>
+          <table class="data-table">
+            <thead><tr><th>Sprint</th><th>Deliverable</th></tr></thead>
+            <tbody>
+              <tr><td>Sprint 1 (W1-4)</td><td>Data pipeline + 12 trained models</td></tr>
+              <tr><td>Sprint 2 (W5-6)</td><td>REST API + Auth system</td></tr>
+              <tr><td>Sprint 3 (W7-8)</td><td>React frontend + Prediction UI</td></tr>
+              <tr><td>Sprint 4 (W9-10)</td><td>Upload + SHAP integration</td></tr>
+              <tr><td>Sprint 5 (W11-12)</td><td>Symptom checker + Export + Admin</td></tr>
+              <tr><td>Sprint 6 (W13-15)</td><td>Responsive + Testing + Deploy</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 15 — 3.5 Hardware & Software Requirements ════════════ -->
+  <section class="slide" id="slide-15">
+    <div class="slide-index"><b>3.5</b> H/W &amp; S/W Requirements</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Requirements</div>
+      <h2 class="slide-title">Hardware &amp; Software Requirements</h2>
+      <div class="two-col">
+        <div>
+          <h3 style="font-size:15px;margin-bottom:12px">3.5.1 Developer's End</h3>
+          <table class="data-table">
+            <thead><tr><th>Component</th><th>Requirement</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Processor</strong></td><td>Intel i5 / AMD Ryzen 5 or higher</td></tr>
+              <tr><td><strong>RAM</strong></td><td>8 GB minimum (16 GB recommended)</td></tr>
+              <tr><td><strong>Storage</strong></td><td>5 GB free disk space</td></tr>
+              <tr><td><strong>OS</strong></td><td>Windows 10/11, macOS 12+, or Linux</td></tr>
+              <tr><td><strong>Python</strong></td><td>3.10 or higher</td></tr>
+              <tr><td><strong>Node.js</strong></td><td>18 LTS or higher</td></tr>
+              <tr><td><strong>Git</strong></td><td>2.30+ for version control</td></tr>
+              <tr><td><strong>IDE</strong></td><td>VS Code (recommended)</td></tr>
+              <tr><td><strong>Browser</strong></td><td>Chrome 100+ / Firefox 100+</td></tr>
+              <tr><td><strong>Internet</strong></td><td>Required (MongoDB Atlas, npm)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h3 style="font-size:15px;margin-bottom:12px">3.5.2 Client's / User's End</h3>
+          <table class="data-table">
+            <thead><tr><th>Component</th><th>Minimum Requirement</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Device</strong></td><td>Any smartphone, tablet, or PC</td></tr>
+              <tr><td><strong>Browser</strong></td><td>Chrome 90+, Firefox 90+, Safari 14+, Edge 90+</td></tr>
+              <tr><td><strong>Screen</strong></td><td>320px width minimum (responsive)</td></tr>
+              <tr><td><strong>Internet</strong></td><td>Stable connection (1 Mbps+)</td></tr>
+              <tr><td><strong>JavaScript</strong></td><td>Must be enabled in browser</td></tr>
+              <tr><td><strong>Cookies</strong></td><td>Must be enabled (for auth)</td></tr>
+              <tr><td><strong>No Installation</strong></td><td>Pure web app — nothing to install</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 16 — 4. Use Cases ════════════ -->
+  <section class="slide" id="slide-16">
+    <div class="slide-index"><b>4</b> Use Cases</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Use Cases</div>
+      <h2 class="slide-title">Actor-wise use cases</h2>
+      <div class="two-col">
+        <div>
+          <div class="uc-actor">👤 Actor 1: Guest User (Unauthenticated)</div>
+          <ul class="uc-list">
+            <li>UC1: View Landing Page with feature overview</li>
+            <li>UC2: Browse Health Resources by disease</li>
+            <li>UC3: View About Models (methodology, accuracy)</li>
+            <li>UC4: Run Disease Prediction (without saving)</li>
+            <li>UC5: Use Symptom Checker triage wizard</li>
+            <li>UC6: Sign up with email/password</li>
+            <li>UC7: Sign up / Log in with Google OAuth</li>
+            <li>UC8: Log in with email/password</li>
+            <li>UC9: Request password reset email</li>
+            <li>UC10: Reset password via token link</li>
+          </ul>
+
+          <div class="uc-actor">🔐 Actor 3: Admin</div>
+          <ul class="uc-list">
+            <li>UC21: Log in via admin login portal</li>
+            <li>UC22: View platform-wide statistics</li>
+            <li>UC23: Browse paginated user list</li>
+            <li>UC24: View individual user detail</li>
+            <li>UC25: View recent predictions (all users)</li>
+          </ul>
+        </div>
+        <div>
+          <div class="uc-actor">🧑‍💻 Actor 2: Authenticated User</div>
+          <ul class="uc-list">
+            <li>UC11: Run prediction with history saving</li>
+            <li>UC12: View prediction history (paginated)</li>
+            <li>UC13: View prediction detail with SHAP</li>
+            <li>UC14: Delete a prediction from history</li>
+            <li>UC15: Upload medical file (PDF/PNG/CSV)</li>
+            <li>UC16: Download uploaded file</li>
+            <li>UC17: Delete uploaded file</li>
+            <li>UC18: Analyze uploaded medical report</li>
+            <li>UC19: Export data as CSV / JSON / PDF</li>
+            <li>UC20: Edit profile / Delete account</li>
+          </ul>
+
+          <div class="uc-actor">🌐 Actor 4: External Systems</div>
+          <ul class="uc-list">
+            <li>UC26: Google OAuth provides identity tokens</li>
+            <li>UC27: Gmail SMTP delivers reset emails</li>
+            <li>UC28: MongoDB Atlas persists all data</li>
+            <li>UC29: ML Models (.joblib) serve predictions</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 17 — 5. Use Case Diagram ════════════ -->
+  <section class="slide" id="slide-17">
+    <div class="slide-index"><b>5</b> Use Case Diagram</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Use Case Diagram</div>
+      <h2 class="slide-title">System use case diagram</h2>
+      <p class="slide-sub">Standard UML use case diagram showing all actors and their interactions with TraceHealth.</p>
+      <div style="text-align:center; padding:10px;">
+        <svg viewBox="0 0 1100 680" style="max-width:1050px;width:100%" xmlns="http://www.w3.org/2000/svg" font-family="Inter,sans-serif">
+          <!-- System boundary -->
+          <rect x="210" y="20" width="680" height="640" rx="18" fill="#FDF9F5" stroke="#B05A37" stroke-width="2" stroke-dasharray="8,4"/>
+          <text x="550" y="54" text-anchor="middle" font-size="16" font-weight="700" fill="#B05A37">TraceHealth System</text>
+
+          <!-- Guest Actor -->
+          <g transform="translate(60,180)">
+            <circle cx="30" cy="15" r="14" fill="none" stroke="#2C1810" stroke-width="2"/>
+            <line x1="30" y1="29" x2="30" y2="58" stroke="#2C1810" stroke-width="2"/>
+            <line x1="10" y1="42" x2="50" y2="42" stroke="#2C1810" stroke-width="2"/>
+            <line x1="30" y1="58" x2="14" y2="80" stroke="#2C1810" stroke-width="2"/>
+            <line x1="30" y1="58" x2="46" y2="80" stroke="#2C1810" stroke-width="2"/>
+            <text x="30" y="98" text-anchor="middle" font-size="11" font-weight="600" fill="#2C1810">Guest</text>
+          </g>
+
+          <!-- Auth User Actor -->
+          <g transform="translate(60,420)">
+            <circle cx="30" cy="15" r="14" fill="none" stroke="#2C1810" stroke-width="2"/>
+            <line x1="30" y1="29" x2="30" y2="58" stroke="#2C1810" stroke-width="2"/>
+            <line x1="10" y1="42" x2="50" y2="42" stroke="#2C1810" stroke-width="2"/>
+            <line x1="30" y1="58" x2="14" y2="80" stroke="#2C1810" stroke-width="2"/>
+            <line x1="30" y1="58" x2="46" y2="80" stroke="#2C1810" stroke-width="2"/>
+            <text x="30" y="98" text-anchor="middle" font-size="11" font-weight="600" fill="#2C1810">User</text>
+          </g>
+
+          <!-- Admin Actor -->
+          <g transform="translate(1010,280)">
+            <circle cx="30" cy="15" r="14" fill="none" stroke="#2C1810" stroke-width="2"/>
+            <line x1="30" y1="29" x2="30" y2="58" stroke="#2C1810" stroke-width="2"/>
+            <line x1="10" y1="42" x2="50" y2="42" stroke="#2C1810" stroke-width="2"/>
+            <line x1="30" y1="58" x2="14" y2="80" stroke="#2C1810" stroke-width="2"/>
+            <line x1="30" y1="58" x2="46" y2="80" stroke="#2C1810" stroke-width="2"/>
+            <text x="30" y="98" text-anchor="middle" font-size="11" font-weight="600" fill="#2C1810">Admin</text>
+          </g>
+
+          <!-- External Actor -->
+          <g transform="translate(1010,500)">
+            <circle cx="30" cy="15" r="14" fill="none" stroke="#2C1810" stroke-width="2"/>
+            <line x1="30" y1="29" x2="30" y2="58" stroke="#2C1810" stroke-width="2"/>
+            <line x1="10" y1="42" x2="50" y2="42" stroke="#2C1810" stroke-width="2"/>
+            <line x1="30" y1="58" x2="14" y2="80" stroke="#2C1810" stroke-width="2"/>
+            <line x1="30" y1="58" x2="46" y2="80" stroke="#2C1810" stroke-width="2"/>
+            <text x="30" y="98" text-anchor="middle" font-size="10" font-weight="600" fill="#2C1810">External</text>
+          </g>
+
+          <!-- Use Cases (ellipses) -->
+          <!-- Guest use cases -->
+          <ellipse cx="340" cy="90" rx="100" ry="22" fill="#FFF" stroke="#B05A37" stroke-width="1.5"/>
+          <text x="340" y="94" text-anchor="middle" font-size="10.5" fill="#2C1810">View Landing Page</text>
+
+          <ellipse cx="340" cy="145" rx="100" ry="22" fill="#FFF" stroke="#B05A37" stroke-width="1.5"/>
+          <text x="340" y="149" text-anchor="middle" font-size="10.5" fill="#2C1810">Sign Up / Log In</text>
+
+          <ellipse cx="340" cy="200" rx="100" ry="22" fill="#FFF" stroke="#B05A37" stroke-width="1.5"/>
+          <text x="340" y="204" text-anchor="middle" font-size="10.5" fill="#2C1810">Run Prediction</text>
+
+          <ellipse cx="340" cy="255" rx="100" ry="22" fill="#FFF" stroke="#B05A37" stroke-width="1.5"/>
+          <text x="340" y="259" text-anchor="middle" font-size="10.5" fill="#2C1810">Symptom Check</text>
+
+          <ellipse cx="340" cy="310" rx="100" ry="22" fill="#FFF" stroke="#B05A37" stroke-width="1.5"/>
+          <text x="340" y="314" text-anchor="middle" font-size="10.5" fill="#2C1810">Reset Password</text>
+
+          <!-- Auth user use cases -->
+          <ellipse cx="550" cy="380" rx="100" ry="22" fill="#FFF" stroke="#5B8DB8" stroke-width="1.5"/>
+          <text x="550" y="384" text-anchor="middle" font-size="10.5" fill="#2C1810">View SHAP Explanation</text>
+
+          <ellipse cx="340" cy="435" rx="100" ry="22" fill="#FFF" stroke="#5B8DB8" stroke-width="1.5"/>
+          <text x="340" y="439" text-anchor="middle" font-size="10.5" fill="#2C1810">View History</text>
+
+          <ellipse cx="550" cy="435" rx="100" ry="22" fill="#FFF" stroke="#5B8DB8" stroke-width="1.5"/>
+          <text x="550" y="439" text-anchor="middle" font-size="10.5" fill="#2C1810">Upload Medical File</text>
+
+          <ellipse cx="340" cy="490" rx="100" ry="22" fill="#FFF" stroke="#5B8DB8" stroke-width="1.5"/>
+          <text x="340" y="494" text-anchor="middle" font-size="10.5" fill="#2C1810">Export Data</text>
+
+          <ellipse cx="550" cy="490" rx="100" ry="22" fill="#FFF" stroke="#5B8DB8" stroke-width="1.5"/>
+          <text x="550" y="494" text-anchor="middle" font-size="10.5" fill="#2C1810">Edit Profile</text>
+
+          <!-- Admin use cases -->
+          <ellipse cx="760" cy="250" rx="100" ry="22" fill="#FFF" stroke="#8E6FAF" stroke-width="1.5"/>
+          <text x="760" y="254" text-anchor="middle" font-size="10.5" fill="#2C1810">View Platform Stats</text>
+
+          <ellipse cx="760" cy="305" rx="100" ry="22" fill="#FFF" stroke="#8E6FAF" stroke-width="1.5"/>
+          <text x="760" y="309" text-anchor="middle" font-size="10.5" fill="#2C1810">Browse All Users</text>
+
+          <ellipse cx="760" cy="360" rx="100" ry="22" fill="#FFF" stroke="#8E6FAF" stroke-width="1.5"/>
+          <text x="760" y="364" text-anchor="middle" font-size="10.5" fill="#2C1810">Recent Predictions</text>
+
+          <!-- External use cases -->
+          <ellipse cx="760" cy="520" rx="100" ry="22" fill="#FFF" stroke="#6B5C52" stroke-width="1.5"/>
+          <text x="760" y="524" text-anchor="middle" font-size="10.5" fill="#2C1810">Google OAuth</text>
+
+          <ellipse cx="760" cy="575" rx="100" ry="22" fill="#FFF" stroke="#6B5C52" stroke-width="1.5"/>
+          <text x="760" y="579" text-anchor="middle" font-size="10.5" fill="#2C1810">Gmail SMTP</text>
+
+          <ellipse cx="760" cy="630" rx="100" ry="22" fill="#FFF" stroke="#6B5C52" stroke-width="1.5"/>
+          <text x="760" y="634" text-anchor="middle" font-size="10.5" fill="#2C1810">MongoDB Atlas</text>
+
+          <!-- Lines: Guest -->
+          <line x1="120" y1="230" x2="240" y2="90" stroke="#9A8E85" stroke-width="1"/>
+          <line x1="120" y1="240" x2="240" y2="145" stroke="#9A8E85" stroke-width="1"/>
+          <line x1="120" y1="250" x2="240" y2="200" stroke="#9A8E85" stroke-width="1"/>
+          <line x1="120" y1="260" x2="240" y2="255" stroke="#9A8E85" stroke-width="1"/>
+          <line x1="120" y1="270" x2="240" y2="310" stroke="#9A8E85" stroke-width="1"/>
+
+          <!-- Lines: User -->
+          <line x1="120" y1="470" x2="240" y2="200" stroke="#5B8DB8" stroke-width="1"/>
+          <line x1="120" y1="480" x2="450" y2="380" stroke="#5B8DB8" stroke-width="1"/>
+          <line x1="120" y1="490" x2="240" y2="435" stroke="#5B8DB8" stroke-width="1"/>
+          <line x1="120" y1="495" x2="450" y2="435" stroke="#5B8DB8" stroke-width="1"/>
+          <line x1="120" y1="500" x2="240" y2="490" stroke="#5B8DB8" stroke-width="1"/>
+          <line x1="120" y1="505" x2="450" y2="490" stroke="#5B8DB8" stroke-width="1"/>
+
+          <!-- Lines: Admin -->
+          <line x1="1010" y1="320" x2="860" y2="250" stroke="#8E6FAF" stroke-width="1"/>
+          <line x1="1010" y1="340" x2="860" y2="305" stroke="#8E6FAF" stroke-width="1"/>
+          <line x1="1010" y1="350" x2="860" y2="360" stroke="#8E6FAF" stroke-width="1"/>
+
+          <!-- Lines: External -->
+          <line x1="1010" y1="540" x2="860" y2="520" stroke="#6B5C52" stroke-width="1"/>
+          <line x1="1010" y1="555" x2="860" y2="575" stroke="#6B5C52" stroke-width="1"/>
+          <line x1="1010" y1="565" x2="860" y2="630" stroke="#6B5C52" stroke-width="1"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- Navigation -->
+<div class="nav-controls">
+  <button class="nav-btn" id="prevBtn" aria-label="Previous slide">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <div class="dots" id="dots"></div>
+  <button class="nav-btn" id="nextBtn" aria-label="Next slide">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const dotsWrap = document.getElementById('dots');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  let current = 0;
+
+  slides.forEach((_, i) => {
+    const d = document.createElement('button');
+    if(i === 0) d.classList.add('active');
+    d.addEventListener('click', () => goTo(i));
+    dotsWrap.appendChild(d);
+  });
+  const dots = dotsWrap.querySelectorAll('button');
+
+  function goTo(i){
+    if(i < 0 || i >= slides.length) return;
+    slides[current].classList.remove('active');
+    dots[current].classList.remove('active');
+    current = i;
+    slides[current].classList.add('active');
+    dots[current].classList.add('active');
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === slides.length - 1;
+    // Scroll to top of slide content
+    slides[current].scrollTop = 0;
+  }
+
+  prevBtn.addEventListener('click', () => goTo(current - 1));
+  nextBtn.addEventListener('click', () => goTo(current + 1));
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+    if(e.key === 'ArrowLeft') goTo(current - 1);
+  });
+  goTo(0);
+</script>
+
+</body>
+</html>
