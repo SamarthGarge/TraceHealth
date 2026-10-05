@@ -8,6 +8,10 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel
+from app.config import get_settings
+
+settings = get_settings()
+
 
 from app.db import get_db
 from app.models.user import UserOut
@@ -65,7 +69,11 @@ async def delete_account(response: Response, current_user: dict = Depends(requir
     await db.users.delete_one({"_id": user_id})
     await db.predictions.delete_many({"userId": user_id})
 
-    # Clear cookies
-    _cookie_opts = dict(httponly=True, samesite="lax")
+    # Clear cookies (SameSite=None required for cross-domain in production)
+    _cookie_opts = dict(
+        httponly=True,
+        samesite="none" if settings.is_production else "lax",
+        secure=settings.cookie_secure,
+    )
     response.delete_cookie("access_token", **_cookie_opts)
     response.delete_cookie("refresh_token", **_cookie_opts)

@@ -46,7 +46,9 @@ router = APIRouter()
 
 _COOKIE_OPTS = dict(
     httponly=True,
-    samesite="lax",
+    # SameSite=None is required for cross-domain cookies (Netlify → Render).
+    # SameSite=None mandates Secure=True, which cookie_secure enforces in production.
+    samesite="none" if settings.is_production else "lax",
     secure=settings.cookie_secure,  # True in production (HTTPS), False in dev
 )
 
