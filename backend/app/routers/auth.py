@@ -138,7 +138,7 @@ async def login(body: LoginRequest, response: Response):
     user = await db.users.find_one({"email": body.email})
 
     # Constant-time comparison — always hash even if user not found
-    dummy_hash = "$2b$12$placeholderplaceholderplaceholderplaceholderplaceholderp"
+    dummy_hash = "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjIQ6VUnEA"
     stored_hash = user["password_hash"] if user else dummy_hash
 
     if not verify_password(body.password, stored_hash) or not user:
