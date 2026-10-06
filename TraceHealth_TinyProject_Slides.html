@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TraceHealth — Tiny Project Presentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --terra:#B05A37; --terra-dark:#8C3E20;
+    --teal-900:#0A4F4F; --teal-700:#0F6E6E; --teal-500:#3C8F8A;
+    --blue-500:#5B8DB8; --violet-500:#8E6FAF; --amber-500:#D98E04;
+    --bg:#FAF8F5; --card:#FFFFFF; --border:#E8E2DA; --border-light:#F0EBE4;
+    --text-primary:#2C1810; --text-secondary:#6B5C52; --text-muted:#9A8E85;
+    --radius:14px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:'Inter',-apple-system,'Segoe UI',sans-serif;
+    background:#1C0F08;
+    color:var(--text-primary);
+    overflow:hidden;
+  }
+  img{ max-width:100%; height:auto; }
+  .deck{ position:relative; width:100vw; height:100vh; }
+  .slide{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; justify-content:flex-start;
+    opacity:0; visibility:hidden; pointer-events:none; transform:translateX(24px);
+    transition:opacity .45s ease, transform .45s ease, visibility 0s linear .45s;
+    padding:5vh 8vw 10vh;
+    background:var(--bg);
+    overflow-y:auto;
+    overflow-x:hidden;
+    z-index:0;
+  }
+  .slide.active{
+    opacity:1; visibility:visible; pointer-events:auto; transform:translateX(0);
+    transition:opacity .45s ease, transform .45s ease, visibility 0s linear 0s;
+    z-index:10;
+  }
+  .slide-inner{ max-width:1180px; width:100%; margin:0 auto; }
+
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:11px; font-weight:600; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--terra); margin-bottom:14px;
+  }
+  .eyebrow::before{
+    content:""; width:7px; height:7px; border-radius:50%;
+    background:var(--terra); display:inline-block;
+  }
+  h1{
+    font-family:'Source Serif 4', serif; font-weight:600;
+    line-height:1.05; letter-spacing:-0.01em; color:var(--text-primary);
+  }
+  h2.slide-title{
+    font-family:'Source Serif 4', serif;
+    font-size:clamp(26px,3.2vw,40px); font-weight:600;
+    color:var(--text-primary); margin-bottom:6px; letter-spacing:-0.01em;
+  }
+  .slide-sub{
+    font-size:15px; color:var(--text-secondary); margin-bottom:28px;
+    max-width:800px; line-height:1.6;
+  }
+
+  /* Slide index */
+  .slide-index{
+    position:absolute; top:5vh; right:8vw;
+    font-size:12px; color:var(--text-muted); font-weight:600; letter-spacing:.05em;
+  }
+  .slide-index b{ color:var(--terra); }
+
+  /* Title slide */
+  #slide-0{
+    background:radial-gradient(circle at 18% 22%, #4A2012 0%, #2C1208 55%, #1C0F08 100%);
+    align-items:flex-start; justify-content:center;
+  }
+  #slide-0 .slide-inner{ position:relative; z-index:2; }
+  #slide-0 .eyebrow{ color:#E8A98A; }
+  #slide-0 .eyebrow::before{ background:#E8A98A; }
+  #slide-0 h1{ color:#FAF8F5; font-size:clamp(40px,6vw,78px); margin-bottom:16px; }
+  #slide-0 .accent{ color:#E8A98A; }
+  #slide-0 .tagline{
+    font-size:clamp(15px,1.5vw,19px); color:#D4BFB2; max-width:660px;
+    line-height:1.6; margin-bottom:36px; font-weight:400;
+  }
+  .tiny-badge{
+    display:inline-block; font-size:11px; font-weight:700; letter-spacing:.15em;
+    text-transform:uppercase; color:#FAF8F5; background:var(--terra);
+    padding:6px 18px; border-radius:999px; margin-bottom:22px;
+  }
+  .student-names{
+    display:flex; flex-direction:column; gap:6px; margin-top:12px;
+  }
+  .student-names span{
+    font-size:14px; color:#E8A98A; font-weight:500; letter-spacing:.02em;
+  }
+  .student-names .placeholder{
+    color:#D4BFB2; font-style:italic; opacity:0.7;
+  }
+  .disease-pills{ display:flex; gap:10px; flex-wrap:wrap; margin-top:24px; }
+  .disease-pills span{
+    font-size:12px; font-weight:500; padding:7px 14px;
+    border-radius:999px; border:1px solid rgba(232,169,138,0.35);
+    color:#F0D8CC; background:rgba(232,169,138,0.08); letter-spacing:.01em;
+  }
+  .pulse-wrap{
+    position:absolute; left:0; right:0; bottom:0; height:30%;
+    overflow:hidden; z-index:1; opacity:.7;
+  }
+  .pulse-wrap svg{ width:200%; height:100%; animation:driftLine 18s linear infinite; }
+  @keyframes driftLine{ from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+  /* Cards */
+  .card{
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    padding:20px;
+  }
+  .card-grid{ display:grid; gap:14px; }
+  .card-grid.cols-2{ grid-template-columns:repeat(2,1fr); }
+  .card-grid.cols-3{ grid-template-columns:repeat(3,1fr); }
+  .card-grid.cols-4{ grid-template-columns:repeat(4,1fr); }
+  .card h3{ font-size:15px; font-weight:600; margin-bottom:6px; color:var(--text-primary); }
+  .card p{ font-size:13px; color:var(--text-secondary); line-height:1.55; }
+  .card .card-num{
+    font-family:'Source Serif 4',serif; font-size:12px; color:var(--text-muted);
+    margin-bottom:8px; display:block; font-weight:600;
+  }
+  .card-accent{ border-left:3px solid var(--terra); }
+
+  /* Lists */
+  .bullet-list{ list-style:none; padding:0; }
+  .bullet-list li{
+    font-size:13.5px; color:var(--text-secondary); line-height:1.6;
+    padding:6px 0 6px 20px; position:relative;
+  }
+  .bullet-list li::before{
+    content:""; width:6px; height:6px; border-radius:50%;
+    background:var(--terra); position:absolute; left:0; top:13px;
+  }
+  .bullet-list li strong{ color:var(--text-primary); font-weight:600; }
+
+  /* Tables */
+  .data-table{
+    width:100%; border-collapse:collapse; font-size:13px;
+  }
+  .data-table th{
+    text-align:left; padding:10px 12px; background:var(--terra);
+    color:#fff; font-weight:600; font-size:12px;
+    letter-spacing:.04em; text-transform:uppercase;
+  }
+  .data-table th:first-child{ border-radius:var(--radius) 0 0 0; }
+  .data-table th:last-child{ border-radius:0 var(--radius) 0 0; }
+  .data-table td{
+    padding:10px 12px; border-bottom:1px solid var(--border-light);
+    color:var(--text-secondary); line-height:1.5;
+  }
+  .data-table tr:last-child td{ border-bottom:none; }
+  .data-table td strong{ color:var(--text-primary); }
+
+  /* Chips */
+  .chip{
+    font-size:12px; font-weight:500; padding:6px 12px; border-radius:8px;
+    background:#F0EBE4; color:var(--text-primary); border:1px solid var(--border);
+    display:inline-block;
+  }
+  .chip-row{ display:flex; flex-wrap:wrap; gap:8px; }
+
+  /* Flow */
+  .method-flow{ display:flex; align-items:stretch; gap:0; margin-bottom:24px; flex-wrap:wrap; }
+  .flow-step{
+    flex:1; min-width:140px; background:var(--card); border:1px solid var(--border);
+    padding:16px 14px;
+  }
+  .flow-step:first-child{ border-radius:var(--radius) 0 0 var(--radius); }
+  .flow-step:last-child{ border-radius:0 var(--radius) var(--radius) 0; }
+  .flow-step:not(:last-child){ border-right:none; }
+  .flow-step .fnum{ font-size:10px; font-weight:700; color:var(--terra); letter-spacing:.08em; }
+  .flow-step h4{ font-size:13.5px; font-weight:600; margin:4px 0 3px; color:var(--text-primary); }
+  .flow-step p{ font-size:12px; color:var(--text-secondary); line-height:1.5; }
+
+  /* Two column */
+  .two-col{ display:grid; grid-template-columns:1fr 1fr; gap:30px; align-items:start; }
+
+  /* Metric panel */
+  .metric-panel{
+    background:var(--terra-dark); border-radius:var(--radius); padding:24px 22px; color:#FAF8F5;
+  }
+  .metric-panel .mp-title{
+    font-size:11px; text-transform:uppercase; letter-spacing:.1em;
+    color:#E8A98A; margin-bottom:14px; font-weight:600;
+  }
+  .metric-row{
+    display:flex; justify-content:space-between; align-items:baseline;
+    padding:9px 0; border-bottom:1px solid rgba(255,255,255,0.1);
+  }
+  .metric-row:last-child{ border-bottom:none; }
+  .metric-row .m-label{ font-size:12.5px; color:#D4BFB2; }
+  .metric-row .m-val{ font-family:'Source Serif 4',serif; font-size:18px; font-weight:600; color:#FAF8F5; }
+
+  /* Problem cards */
+  .pcard{
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    padding:16px 18px; display:flex; gap:12px; align-items:flex-start;
+  }
+  .pcard .dot{ width:7px; height:7px; border-radius:50%; margin-top:6px; flex-shrink:0; }
+  .pcard p{ font-size:13.5px; color:var(--text-secondary); line-height:1.55; }
+  .pcard strong{ color:var(--text-primary); font-weight:600; }
+
+  /* Description text */
+  .desc-text{
+    font-size:14px; color:var(--text-secondary); line-height:1.7;
+    max-width:960px; column-count:2; column-gap:36px;
+  }
+  .desc-text.single-col{ column-count:1; }
+
+  /* Gantt */
+  .gantt-row{
+    display:flex; align-items:center; gap:0; margin-bottom:3px;
+  }
+  .gantt-label{
+    width:180px; flex-shrink:0; font-size:11.5px; color:var(--text-secondary);
+    text-align:right; padding-right:12px; font-weight:500;
+  }
+  .gantt-track{
+    flex:1; height:22px; background:var(--border-light); border-radius:4px;
+    position:relative; overflow:hidden;
+  }
+  .gantt-bar{
+    position:absolute; top:2px; bottom:2px; border-radius:3px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:9px; font-weight:600; color:#fff; letter-spacing:.03em;
+  }
+
+  /* Screenshot showcase cards */
+  .screenshot-grid{ display:grid; gap:22px; width:100%; }
+  .screenshot-grid.two{ grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .screenshot-grid.three{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .screenshot-grid > div{ min-width:0; }
+
+  .screenshot-card{
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    overflow:hidden; box-shadow:0 6px 20px rgba(44,24,16,0.07);
+    display:flex; flex-direction:column;
+    transition:transform .2s ease, box-shadow .2s ease;
+  }
+  .screenshot-card:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 28px rgba(44,24,16,0.12);
+  }
+  .screenshot-topbar{
+    background:#F2ECE4; padding:7px 12px; display:flex; align-items:center;
+    gap:6px; border-bottom:1px solid var(--border);
+  }
+  .screenshot-topbar .dots-group{ display:flex; align-items:center; gap:5px; }
+  .screenshot-topbar .dot-r{ width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .screenshot-topbar .dot-r.red{ background:#E26D5C; }
+  .screenshot-topbar .dot-r.yellow{ background:#E8AC43; }
+  .screenshot-topbar .dot-r.green{ background:#62B079; }
+  .screenshot-topbar .url-bar{
+    flex:1; background:#FAF8F5; border:1px solid var(--border); border-radius:4px;
+    padding:2px 8px; font-size:10.5px; color:var(--text-muted); font-family:monospace;
+    margin-left:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+
+  .img-viewport{
+    position:relative; width:100%; height:275px; background:#FAF8F5;
+    display:flex; align-items:flex-start; justify-content:center; overflow:hidden;
+  }
+  .img-viewport img{
+    width:100%; height:100%; object-fit:cover; object-position:top center;
+    display:block; cursor:zoom-in; transition:transform .25s ease;
+  }
+  .img-viewport img:hover{ transform:scale(1.015); }
+
+  .img-placeholder-label{
+    display:none; flex-direction:column; align-items:center; justify-content:center;
+    padding:30px 16px; text-align:center; width:100%; height:100%;
+    background:rgba(176,90,55,0.03);
+  }
+  .ipl-icon{ font-size:28px; margin-bottom:6px; }
+  .ipl-title{ font-size:13px; font-weight:600; color:var(--text-primary); margin-bottom:3px; }
+  .ipl-hint{ font-size:11px; color:var(--text-muted); max-width:260px; line-height:1.4; }
+  .ipl-hint code{ background:#E8E2DA; padding:1px 5px; border-radius:3px; color:var(--terra); font-size:10.5px; }
+
+  .img-caption{
+    font-size:12px; color:var(--text-secondary); padding:9px 14px; line-height:1.45;
+    background:var(--card); border-top:1px solid var(--border-light);
+  }
+  .img-caption strong{ color:var(--text-primary); }
+
+  /* Lightbox */
+  .lightbox{
+    position:fixed; inset:0; background:rgba(28,15,8,0.88); backdrop-filter:blur(8px);
+    z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity .25s ease; padding:24px;
+  }
+  .lightbox.open{ opacity:1; pointer-events:auto; }
+  .lightbox img{
+    max-width:92vw; max-height:84vh; border-radius:8px;
+    box-shadow:0 16px 48px rgba(0,0,0,0.5); object-fit:contain;
+  }
+  .lightbox-caption{
+    color:#FAF8F5; margin-top:12px; font-size:13px; font-weight:500; letter-spacing:.02em;
+    background:rgba(0,0,0,0.4); padding:6px 16px; border-radius:999px;
+  }
+  .lightbox-close{
+    position:absolute; top:20px; right:28px; font-size:32px; color:#FAF8F5; cursor:pointer;
+    line-height:1; opacity:.8; transition:opacity .2s ease;
+  }
+  .lightbox-close:hover{ opacity:1; }
+
+  /* Arch flow */
+  .arch-flow{
+    display:flex; align-items:center; justify-content:center; gap:0; flex-wrap:wrap;
+    margin:20px 0;
+  }
+  .arch-box{
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    padding:16px 20px; text-align:center; min-width:140px;
+  }
+  .arch-box h4{ font-size:13px; font-weight:700; color:var(--terra); margin-bottom:4px; }
+  .arch-box p{ font-size:11px; color:var(--text-secondary); line-height:1.4; }
+  .arch-arrow{
+    font-size:20px; color:var(--terra); padding:0 8px; font-weight:300;
+  }
+
+  /* Nav */
+  .nav-controls{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    display:flex; align-items:center; gap:14px; z-index:50;
+    background:rgba(255,255,255,0.9); backdrop-filter:blur(8px);
+    padding:8px 16px; border-radius:999px; border:1px solid var(--border);
+    box-shadow:0 4px 18px rgba(0,0,0,0.08);
+  }
+  .nav-btn{
+    width:32px; height:32px; border-radius:50%; border:none; cursor:pointer;
+    background:var(--terra); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    transition:background .2s ease, transform .15s ease;
+  }
+  .nav-btn:hover{ background:var(--terra-dark); transform:scale(1.06); }
+  .nav-btn:disabled{ background:#C9B8AF; cursor:default; transform:none; }
+  .dots{ display:flex; gap:6px; }
+  .dots button{
+    width:7px; height:7px; border-radius:50%; border:none;
+    background:#D4C4BA; cursor:pointer; padding:0; transition:all .2s ease;
+  }
+  .dots button.active{ background:var(--terra); width:20px; border-radius:5px; }
+
+  @media (max-width:860px){
+    .two-col, .card-grid.cols-2, .card-grid.cols-3, .card-grid.cols-4{ grid-template-columns:1fr; }
+    .method-flow, .arch-flow{ flex-direction:column; }
+    .flow-step{ border-radius:0 !important; border-right:1px solid var(--border) !important; border-bottom:none;}
+    .flow-step:first-child{ border-radius:var(--radius) var(--radius) 0 0 !important; }
+    .flow-step:last-child{ border-radius:0 0 var(--radius) var(--radius) !important; border-bottom:1px solid var(--border) !important;}
+    .desc-text{ column-count:1; }
+    .screenshot-grid.two, .screenshot-grid.three{ grid-template-columns:1fr; }
+    .arch-arrow{ transform:rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+
+<div class="deck">
+
+  <!-- ════════════ SLIDE 0 — TITLE ════════════ -->
+  <section class="slide active" id="slide-0">
+    <div class="pulse-wrap">
+      <svg viewBox="0 0 1600 300" preserveAspectRatio="none">
+        <polyline points="0,150 120,150 150,150 175,60 200,240 225,150 260,150 420,150 450,150 475,90 500,210 525,150 560,150 720,150 750,150 775,40 800,260 825,150 860,150 1020,150 1050,150 1075,90 1100,210 1125,150 1160,150 1320,150 1350,150 1375,60 1400,240 1425,150 1460,150 1600,150"
+              fill="none" stroke="#8C3E20" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="slide-inner">
+      <div class="tiny-badge">Tiny Project</div>
+      <div class="eyebrow">Explainable AI · Healthcare · Full-Stack Application</div>
+      <h1>Trace<span class="accent">Health</span></h1>
+      <p class="tagline">An explainable, multi-disease health risk screening platform — combining tuned ML models, SHAP-based reasoning, a React + FastAPI architecture, and MongoDB-backed user management.</p>
+      <div class="student-names">
+        <span class="placeholder">1. Samarth Garge (2505102310005)</span>
+        <span class="placeholder">2. Patel HetKumar Sandipbhai (2505102310011)</span>
+        <span class="placeholder">3. Yash Chaudhari (2505102310003)</span>
+      </div>
+      <div class="disease-pills">
+        <span>Diabetes</span><span>Heart Disease</span><span>Tuberculosis</span><span>Lung Cancer</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 1 — OBJECTIVE ════════════ -->
+  <section class="slide" id="slide-1">
+    <div class="slide-index"><b>01</b> Objective</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Project Objective</div>
+      <h2 class="slide-title">Objective of the Project</h2>
+      <p class="slide-sub">To design and develop a full-stack, explainable AI-powered health risk screening platform that democratizes access to multi-disease risk assessment.</p>
+      <div class="card-grid cols-2">
+        <div class="pcard"><span class="dot" style="background:var(--terra)"></span>
+          <p><strong>Unified Screening.</strong> Build a single platform that screens for four major diseases — Diabetes, Heart Disease, Tuberculosis, and Lung Cancer — with consistent methodology and user experience.</p>
+        </div>
+        <div class="pcard"><span class="dot" style="background:var(--blue-500)"></span>
+          <p><strong>Explainable AI.</strong> Ensure every prediction is accompanied by SHAP-based reasoning, so users understand <em>why</em> their risk is High, Moderate, or Low — not just the number.</p>
+        </div>
+        <div class="pcard"><span class="dot" style="background:var(--violet-500)"></span>
+          <p><strong>Multi-Model Comparison.</strong> Run three ML algorithms (Logistic Regression, Random Forest, XGBoost) simultaneously and present side-by-side results for full model transparency.</p>
+        </div>
+        <div class="pcard"><span class="dot" style="background:var(--amber-500)"></span>
+          <p><strong>Longitudinal Tracking.</strong> Enable authenticated users to save prediction history, track how their risk evolves over time, and export data in CSV, JSON, and PDF formats.</p>
+        </div>
+        <div class="pcard"><span class="dot" style="background:var(--teal-700)"></span>
+          <p><strong>Zero-Cost Deployment.</strong> Deploy on entirely free cloud tiers (Vercel + Render + MongoDB Atlas M0), proving enterprise-quality healthcare AI is accessible to students, researchers, and low-resource clinics.</p>
+        </div>
+        <div class="pcard"><span class="dot" style="background:#C54B6C"></span>
+          <p><strong>Privacy & Security.</strong> Implement JWT-based authentication, role-based access control, data consent management, and GDPR-style privacy practices for handling sensitive health data.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 2 — PROJECT DESCRIPTION ════════════ -->
+  <section class="slide" id="slide-2">
+    <div class="slide-index"><b>02</b> Project Description</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Project Description</div>
+      <h2 class="slide-title">What TraceHealth does and why it matters</h2>
+      <div class="desc-text">
+        <p>TraceHealth is a full-stack, explainable AI-powered health risk screening platform that allows users to assess their risk for four major diseases — Diabetes, Heart Disease, Tuberculosis, and Lung Cancer — using validated machine learning models. Unlike traditional "black-box" health prediction tools, TraceHealth pairs every prediction with SHAP (SHapley Additive exPlanations)-based reasoning, enabling users to understand exactly which health parameters drove their risk score and by how much.</p>
+        <p style="margin-top:12px">The platform employs three distinct ML algorithms — Logistic Regression, Random Forest, and XGBoost — for each disease, running all three simultaneously and presenting a side-by-side comparison. An ensemble average provides a balanced overall risk level (Low, Moderate, or High), while individual model results let medically literate users or practitioners examine algorithmic consensus or disagreement.</p>
+        <p style="margin-top:12px">On the backend, TraceHealth is built with FastAPI (Python), serving a REST API with JWT-based authentication, role-based access control, Google OAuth integration, and password reset via Gmail SMTP. The frontend is a modern single-page application built with React 18, Vite, React Router, Zustand for state management, and GSAP for premium animations.</p>
+        <p style="margin-top:12px">Key features include: prediction history with full SHAP detail, a rule-based symptom checker triage wizard, secure medical file upload and AI-powered report analysis, data export in CSV/JSON/PDF formats, an admin dashboard with platform-wide statistics, and a responsive editorial design optimized for both desktop and mobile.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 3 — TECHNOLOGY STACK ════════════ -->
+  <section class="slide" id="slide-3">
+    <div class="slide-index"><b>03</b> Technology Stack</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Tools &amp; Technology</div>
+      <h2 class="slide-title">Technology stack powering TraceHealth</h2>
+      <table class="data-table">
+        <thead>
+          <tr><th>Layer</th><th>Technology</th><th>Justification</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Frontend</strong></td><td>React 18 + Vite</td><td>Component-based architecture, fast HMR, code-splitting, largest ecosystem for SPAs.</td></tr>
+          <tr><td><strong>Styling</strong></td><td>Tailwind CSS + Custom CSS</td><td>Utility-first rapid prototyping with custom design tokens for premium editorial aesthetics.</td></tr>
+          <tr><td><strong>State</strong></td><td>Zustand + React Query</td><td>Lightweight global state (Zustand) + server-state caching and refetching (React Query).</td></tr>
+          <tr><td><strong>Animation</strong></td><td>GSAP</td><td>Industry-standard animation library for scroll-triggered and interaction micro-animations.</td></tr>
+          <tr><td><strong>Backend</strong></td><td>FastAPI (Python)</td><td>Async-native, auto-generated OpenAPI docs, Pydantic validation, fastest Python framework.</td></tr>
+          <tr><td><strong>Database</strong></td><td>MongoDB Atlas + Motor</td><td>Flexible schema for varied disease features, free M0 tier, async driver for FastAPI.</td></tr>
+          <tr><td><strong>Auth</strong></td><td>JWT (python-jose) + bcrypt</td><td>Stateless auth, httpOnly cookies, no third-party auth service dependency.</td></tr>
+          <tr><td><strong>ML</strong></td><td>scikit-learn + XGBoost</td><td>Production-proven, lightweight tabular classifiers. Serialized to ~12MB total with joblib.</td></tr>
+          <tr><td><strong>Explainability</strong></td><td>SHAP</td><td>Gold-standard for ML interpretability — TreeExplainer for RF/XGB, LinearExplainer for LR.</td></tr>
+          <tr><td><strong>PDF Export</strong></td><td>WeasyPrint</td><td>Python-native HTML→PDF engine for generating professional medical reports.</td></tr>
+          <tr><td><strong>Deployment</strong></td><td>Vercel + Render</td><td>Free tiers with auto-deploy from GitHub, HTTPS, global CDN (Vercel), Python support (Render).</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 4 — SYSTEM MODULES ════════════ -->
+  <section class="slide" id="slide-4">
+    <div class="slide-index"><b>04</b> System Modules</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Modules &amp; Features</div>
+      <h2 class="slide-title">11 major modules comprising 27+ screens</h2>
+      <p class="slide-sub">The platform is organized into distinct functional modules, each handling a specific domain of the application.</p>
+      <div class="card-grid cols-3">
+        <div class="card"><span class="card-num">M1</span><h3>🔐 Authentication</h3><p>Email/password signup & login, Google OAuth, JWT access + refresh tokens, password reset via Gmail SMTP, admin login.</p></div>
+        <div class="card"><span class="card-num">M2</span><h3>🧠 Disease Prediction</h3><p>Run predictions for 4 diseases using 3 ML models simultaneously. Input validation, preprocessing, ensemble averaging, risk classification.</p></div>
+        <div class="card"><span class="card-num">M3</span><h3>📊 SHAP Explainability</h3><p>Per-prediction SHAP feature attribution for every model. Top contributors shown as interactive bar charts with direction indicators.</p></div>
+        <div class="card"><span class="card-num">M4</span><h3>📋 Prediction History</h3><p>Paginated history with disease filter. Full detail view with SHAP breakdown. Delete individual predictions. Ownership-enforced access.</p></div>
+        <div class="card"><span class="card-num">M5</span><h3>🩺 Symptom Checker</h3><p>Rule-based triage wizard with weighted symptom scoring. Produces referral suggestions per disease to guide predictions.</p></div>
+        <div class="card"><span class="card-num">M6</span><h3>📁 File Upload</h3><p>Secure GridFS upload (PDF, PNG, JPEG, CSV). Magic-byte validation, 10MB limit. AI-powered report analysis.</p></div>
+        <div class="card"><span class="card-num">M7</span><h3>📥 Data Export</h3><p>Export predictions as CSV, JSON, or professional PDF reports. Date range filtering, per-prediction or bulk export.</p></div>
+        <div class="card"><span class="card-num">M8</span><h3>🛡️ Admin Dashboard</h3><p>Platform-wide stats (user count, predictions, disease distribution). Browse all users, view user details.</p></div>
+        <div class="card"><span class="card-num">M9</span><h3>👤 User Management</h3><p>Profile editing, account deletion, data consent management. Role-based access control (user/admin).</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 5 — SYSTEM ARCHITECTURE ════════════ -->
+  <section class="slide" id="slide-5">
+    <div class="slide-index"><b>05</b> Architecture</div>
+    <div class="slide-inner">
+      <div class="eyebrow">System Architecture</div>
+      <h2 class="slide-title">How the system works end-to-end</h2>
+      <p class="slide-sub">A decoupled frontend/backend architecture with ML inference at the core.</p>
+
+      <div class="method-flow">
+        <div class="flow-step">
+          <div class="fnum">STEP 01</div>
+          <h4>User Input</h4>
+          <p>User enters health parameters via the React frontend forms, validated client-side.</p>
+        </div>
+        <div class="flow-step">
+          <div class="fnum">STEP 02</div>
+          <h4>API Request</h4>
+          <p>Data sent to FastAPI backend via REST API with JWT authentication.</p>
+        </div>
+        <div class="flow-step">
+          <div class="fnum">STEP 03</div>
+          <h4>ML Inference</h4>
+          <p>3 models (LR, RF, XGBoost) run simultaneously on preprocessed features.</p>
+        </div>
+        <div class="flow-step">
+          <div class="fnum">STEP 04</div>
+          <h4>SHAP Analysis</h4>
+          <p>SHAP computes per-feature attribution for each model's prediction.</p>
+        </div>
+        <div class="flow-step">
+          <div class="fnum">STEP 05</div>
+          <h4>Results</h4>
+          <p>Ensemble risk level + individual model results + SHAP explanations returned and rendered.</p>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="card card-accent">
+          <h3>Frontend (Client)</h3>
+          <p><strong>React 18</strong> SPA with Vite build tool. React Router for navigation, Zustand for global state, React Query for server-state caching. GSAP animations for premium feel. Responsive editorial design system with custom CSS tokens. Deployed on <strong>Vercel</strong> (global CDN).</p>
+        </div>
+        <div class="card card-accent">
+          <h3>Backend (Server)</h3>
+          <p><strong>FastAPI</strong> (Python) async REST API. 40+ endpoints covering auth, predictions, history, uploads, export, and admin. JWT tokens in httpOnly cookies. MongoDB Atlas via Motor (async driver). GridFS for file storage. 12 pre-trained ML models loaded from joblib. Deployed on <strong>Render</strong>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 6 — SHAP EXPLAINABILITY ════════════ -->
+  <section class="slide" id="slide-6">
+    <div class="slide-index"><b>06</b> Explainability</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Key Differentiator</div>
+      <h2 class="slide-title">SHAP-powered explainable predictions</h2>
+      <p class="slide-sub">Every prediction comes with a breakdown of which features contributed to the risk score and by how much — making the AI transparent and trustworthy.</p>
+      <div class="two-col">
+        <div>
+          <ul class="bullet-list">
+            <li><strong>What is SHAP?</strong> SHapley Additive exPlanations — a game-theory-based approach that explains the output of any ML model by computing each feature's contribution.</li>
+            <li><strong>TreeExplainer</strong> used for Random Forest and XGBoost models — exact, fast, and model-specific Shapley value computation.</li>
+            <li><strong>LinearExplainer</strong> used for Logistic Regression — computes feature contributions based on model coefficients.</li>
+            <li><strong>Per-prediction explanations</strong> — not global averages. Each individual prediction gets its own unique SHAP breakdown.</li>
+            <li><strong>Interactive visualization</strong> — top contributing features displayed as directional bar charts showing whether each feature increased or decreased risk.</li>
+            <li><strong>Multi-model comparison</strong> — users can compare SHAP explanations across all 3 models to see if they agree on what matters.</li>
+          </ul>
+        </div>
+        <div class="metric-panel">
+          <div class="mp-title">Model Performance</div>
+          <div class="metric-row"><span class="m-label">Diabetes — Accuracy</span><span class="m-val">≥ 78%</span></div>
+          <div class="metric-row"><span class="m-label">Heart Disease — Accuracy</span><span class="m-val">≥ 82%</span></div>
+          <div class="metric-row"><span class="m-label">TB & Lung Cancer — CV</span><span class="m-val">> 80%</span></div>
+          <div class="metric-row"><span class="m-label">Models Trained</span><span class="m-val">12</span></div>
+          <div class="metric-row"><span class="m-label">Prediction + SHAP Render</span><span class="m-val">≤ 2s</span></div>
+          <div class="metric-row"><span class="m-label">Algorithms Per Disease</span><span class="m-val">3</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 7 — PROJECT TIMELINE ════════════ -->
+  <section class="slide" id="slide-7">
+    <div class="slide-index"><b>07</b> Timeline</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Project Plan &amp; Timeline</div>
+      <h2 class="slide-title">Development phases and milestones</h2>
+      <table class="data-table" style="margin-bottom:20px">
+        <thead><tr><th>Phase</th><th>Task</th><th>Duration</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Phase 1</strong></td><td>Data Collection, Cleaning, EDA</td><td>Week 1–2</td><td>✅ Complete</td></tr>
+          <tr><td><strong>Phase 2</strong></td><td>Model Training & Evaluation (LR, RF, XGB × 4 diseases)</td><td>Week 3–4</td><td>✅ Complete</td></tr>
+          <tr><td><strong>Phase 3</strong></td><td>Backend API: Auth, Prediction, History endpoints</td><td>Week 5–6</td><td>✅ Complete</td></tr>
+          <tr><td><strong>Phase 4</strong></td><td>Frontend: Landing, Auth pages, Predict UI</td><td>Week 7–8</td><td>✅ Complete</td></tr>
+          <tr><td><strong>Phase 5</strong></td><td>File Upload (GridFS) + AI Report Analysis</td><td>Week 9</td><td>✅ Complete</td></tr>
+          <tr><td><strong>Phase 6</strong></td><td>SHAP Integration + Interactive Charts</td><td>Week 10</td><td>✅ Complete</td></tr>
+          <tr><td><strong>Phase 7</strong></td><td>Symptom Checker + Resources + About Models</td><td>Week 11</td><td>✅ Complete</td></tr>
+          <tr><td><strong>Phase 8</strong></td><td>Export (CSV/JSON/PDF) + Admin Dashboard</td><td>Week 12</td><td>✅ Complete</td></tr>
+          <tr><td><strong>Phase 9</strong></td><td>Responsive Design, Testing & Bug Fixes</td><td>Week 13–14</td><td>✅ Complete</td></tr>
+          <tr><td><strong>Phase 10</strong></td><td>Deployment (Vercel + Render) + Documentation</td><td>Week 15</td><td>🔄 In Progress</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:8px">
+        <div class="gantt-row"><span class="gantt-label">Data & EDA</span><div class="gantt-track"><div class="gantt-bar" style="left:0;width:13%;background:var(--terra)">W1-2</div></div></div>
+        <div class="gantt-row"><span class="gantt-label">Model Training</span><div class="gantt-track"><div class="gantt-bar" style="left:13%;width:13%;background:var(--blue-500)">W3-4</div></div></div>
+        <div class="gantt-row"><span class="gantt-label">Backend API</span><div class="gantt-track"><div class="gantt-bar" style="left:26%;width:13%;background:var(--violet-500)">W5-6</div></div></div>
+        <div class="gantt-row"><span class="gantt-label">Frontend UI</span><div class="gantt-track"><div class="gantt-bar" style="left:40%;width:13%;background:var(--amber-500)">W7-8</div></div></div>
+        <div class="gantt-row"><span class="gantt-label">Upload + Analysis</span><div class="gantt-track"><div class="gantt-bar" style="left:53%;width:7%;background:var(--teal-700)">W9</div></div></div>
+        <div class="gantt-row"><span class="gantt-label">SHAP + Charts</span><div class="gantt-track"><div class="gantt-bar" style="left:60%;width:7%;background:#C54B6C">W10</div></div></div>
+        <div class="gantt-row"><span class="gantt-label">Symptom + Resources</span><div class="gantt-track"><div class="gantt-bar" style="left:67%;width:7%;background:var(--terra)">W11</div></div></div>
+        <div class="gantt-row"><span class="gantt-label">Export + Admin</span><div class="gantt-track"><div class="gantt-bar" style="left:74%;width:7%;background:var(--blue-500)">W12</div></div></div>
+        <div class="gantt-row"><span class="gantt-label">Responsive + Testing</span><div class="gantt-track"><div class="gantt-bar" style="left:80%;width:13%;background:var(--violet-500)">W13-14</div></div></div>
+        <div class="gantt-row"><span class="gantt-label">Deploy + Docs</span><div class="gantt-track"><div class="gantt-bar" style="left:93%;width:7%;background:var(--amber-500)">W15</div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 8 — SCREENSHOTS: Landing, Login & Signup ════════════ -->
+  <section class="slide" id="slide-8">
+    <div class="slide-index"><b>08</b> Screenshots</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Application Screenshots</div>
+      <h2 class="slide-title">Landing Page, Login &amp; Signup</h2>
+      <p class="slide-sub">The public-facing entry points of TraceHealth — premium editorial design with GSAP animations.</p>
+      <div class="screenshot-grid two">
+
+        <!-- Screenshot 1: Landing Page -->
+        <div class="screenshot-card">
+          <div class="screenshot-topbar">
+            <div class="dots-group">
+              <span class="dot-r red"></span>
+              <span class="dot-r yellow"></span>
+              <span class="dot-r green"></span>
+            </div>
+            <div class="url-bar">localhost:5173 /</div>
+          </div>
+          <div class="img-viewport">
+            <!-- ✏️ REPLACE: Change the src below to your Landing Page screenshot -->
+            <img src="dashboard.png" alt="Landing Page Screenshot" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" onload="this.nextElementSibling.style.display='none';">
+            <div class="img-placeholder-label">
+              <div class="ipl-icon">📸</div>
+              <div class="ipl-title">Landing Page Screenshot</div>
+              <div class="ipl-hint">Replace the <code>src=""</code> in this &lt;img&gt; tag with your screenshot path</div>
+            </div>
+          </div>
+          <div class="img-caption"><strong>Landing Page</strong> — Hero section with disease overview cards and CTA</div>
+        </div>
+
+        <!-- Screenshot 2: Login Page -->
+        <div class="screenshot-card">
+          <div class="screenshot-topbar">
+            <div class="dots-group">
+              <span class="dot-r red"></span>
+              <span class="dot-r yellow"></span>
+              <span class="dot-r green"></span>
+            </div>
+            <div class="url-bar">localhost:5173 / login</div>
+          </div>
+          <div class="img-viewport">
+            <!-- ✏️ REPLACE: Change the src below to your Login Page screenshot -->
+            <img src="Login.png" alt="Login Page Screenshot" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" onload="this.nextElementSibling.style.display='none';">
+            <div class="img-placeholder-label">
+              <div class="ipl-icon">📸</div>
+              <div class="ipl-title">Login Page Screenshot</div>
+              <div class="ipl-hint">Replace the <code>src=""</code> in this &lt;img&gt; tag with your screenshot path</div>
+            </div>
+          </div>
+          <div class="img-caption"><strong>Login</strong> — Email/password + Google OAuth authentication</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 9 — SCREENSHOTS: Prediction, SHAP, History ════════════ -->
+  <section class="slide" id="slide-9">
+    <div class="slide-index"><b>09</b> Screenshots</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Application Screenshots</div>
+      <h2 class="slide-title">Prediction, SHAP Results &amp; More</h2>
+      <p class="slide-sub">Core features — disease risk prediction with SHAP explanations, prediction history, and symptom checker.</p>
+      <div class="screenshot-grid two">
+
+        <!-- Screenshot 3: Prediction Form / Results -->
+        <div class="screenshot-card">
+          <div class="screenshot-topbar">
+            <div class="dots-group">
+              <span class="dot-r red"></span>
+              <span class="dot-r yellow"></span>
+              <span class="dot-r green"></span>
+            </div>
+            <div class="url-bar">localhost:5173 / predict</div>
+          </div>
+          <div class="img-viewport">
+            <!-- ✏️ REPLACE: Change the src below to your Prediction/Results screenshot -->
+            <img src="prediction_form.png" alt="Prediction Results Screenshot" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" onload="this.nextElementSibling.style.display='none';">
+            <div class="img-placeholder-label">
+              <div class="ipl-icon">📸</div>
+              <div class="ipl-title">Prediction &amp; SHAP Results</div>
+              <div class="ipl-hint">Replace the <code>src=""</code> in this &lt;img&gt; tag with your screenshot path</div>
+            </div>
+          </div>
+          <div class="img-caption"><strong>Prediction</strong> — Risk scores with SHAP feature attribution chart</div>
+        </div>
+
+        <!-- Screenshot 4: History / Symptom Checker / Other -->
+        <div class="screenshot-card">
+          <div class="screenshot-topbar">
+            <div class="dots-group">
+              <span class="dot-r red"></span>
+              <span class="dot-r yellow"></span>
+              <span class="dot-r green"></span>
+            </div>
+            <div class="url-bar">localhost:5173 / history</div>
+          </div>
+          <div class="img-viewport">
+            <!-- ✏️ REPLACE: Change the src below to your History or Symptom Checker screenshot -->
+            <img src="history.png" alt="History / Symptom Checker Screenshot" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" onload="this.nextElementSibling.style.display='none';">
+            <div class="img-placeholder-label">
+              <div class="ipl-icon">📸</div>
+              <div class="ipl-title">History / Symptom Checker</div>
+              <div class="ipl-hint">Replace the <code>src=""</code> in this &lt;img&gt; tag with your screenshot path</div>
+            </div>
+          </div>
+          <div class="img-caption"><strong>History &amp; Symptom Checker</strong> — Track predictions and get triage suggestions</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════ SLIDE 10 — CONCLUSION & FUTURE SCOPE ════════════ -->
+  <section class="slide" id="slide-10">
+    <div class="slide-index"><b>10</b> Conclusion</div>
+    <div class="slide-inner">
+      <div class="eyebrow">Conclusion &amp; Future Scope</div>
+      <h2 class="slide-title">Summary and the road ahead</h2>
+      <div class="two-col">
+        <div>
+          <h3 style="font-size:15px;margin-bottom:12px;color:var(--text-primary)">What We Built</h3>
+          <ul class="bullet-list">
+            <li><strong>12 trained ML models</strong> (3 per disease × 4 diseases) meeting or exceeding accuracy benchmarks with honest metrics reporting.</li>
+            <li><strong>A deployed full-stack application</strong> with premium editorial design, sub-2-second predictions, and SHAP-powered explanations.</li>
+            <li><strong>40+ REST API endpoints</strong> covering authentication, predictions, history, file upload, data export, and admin operations.</li>
+            <li><strong>Zero-cost deployment</strong> on Vercel + Render + MongoDB Atlas free tiers, proving healthcare AI can be accessible to all.</li>
+            <li><strong>Complete data lifecycle</strong> — predict, save, track, export, and delete — with GDPR-style privacy practices.</li>
+            <li><strong>Professional PDF health reports</strong> for users to share with their healthcare providers.</li>
+          </ul>
+        </div>
+        <div>
+          <h3 style="font-size:15px;margin-bottom:12px;color:var(--text-primary)">Future Scope</h3>
+          <div class="card-grid" style="grid-template-columns:1fr;gap:10px">
+            <div class="card card-accent">
+              <h3>🫁 Image-Based Detection</h3>
+              <p>CNN-based chest X-ray screening for TB and CT/histopathology analysis for Lung Cancer using transfer learning (ResNet50) with Grad-CAM explainability.</p>
+            </div>
+            <div class="card card-accent">
+              <h3>📄 OCR/NLP Report Extraction</h3>
+              <p>Auto-extract structured health data from uploaded lab reports using OCR and NLP to auto-fill prediction forms.</p>
+            </div>
+            <div class="card card-accent">
+              <h3>🔔 Health Trend Notifications</h3>
+              <p>Email alerts when risk trends change significantly over multiple assessments — proactive health monitoring.</p>
+            </div>
+            <div class="card card-accent">
+              <h3>🌐 Multi-Language Support</h3>
+              <p>Internationalization (i18n) to serve non-English speaking populations in underserved healthcare settings.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="metric-panel" style="margin-top:24px">
+        <div class="mp-title">Project at a Glance</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0">
+          <div class="metric-row" style="flex-direction:column;align-items:center;text-align:center;border-bottom:none;border-right:1px solid rgba(255,255,255,0.1);padding:10px">
+            <span class="m-val">4</span><span class="m-label">Diseases</span>
+          </div>
+          <div class="metric-row" style="flex-direction:column;align-items:center;text-align:center;border-bottom:none;border-right:1px solid rgba(255,255,255,0.1);padding:10px">
+            <span class="m-val">12</span><span class="m-label">ML Models</span>
+          </div>
+          <div class="metric-row" style="flex-direction:column;align-items:center;text-align:center;border-bottom:none;border-right:1px solid rgba(255,255,255,0.1);padding:10px">
+            <span class="m-val">40+</span><span class="m-label">API Endpoints</span>
+          </div>
+          <div class="metric-row" style="flex-direction:column;align-items:center;text-align:center;border-bottom:none;padding:10px">
+            <span class="m-val">$0</span><span class="m-label">Hosting Cost</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- Navigation -->
+<div class="nav-controls">
+  <button class="nav-btn" id="prevBtn" aria-label="Previous slide">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <div class="dots" id="dots"></div>
+  <button class="nav-btn" id="nextBtn" aria-label="Next slide">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+</div>
+
+<!-- Lightbox for Full-Size Screenshot Preview -->
+<div id="lightbox" class="lightbox" onclick="closeLightbox()">
+  <span class="lightbox-close" title="Close">&times;</span>
+  <img id="lightbox-img" src="" alt="Enlarged screenshot" onclick="event.stopPropagation()">
+  <div id="lightbox-caption" class="lightbox-caption"></div>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const dotsWrap = document.getElementById('dots');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  let current = 0;
+
+  slides.forEach((_, i) => {
+    const d = document.createElement('button');
+    if(i === 0) d.classList.add('active');
+    d.addEventListener('click', () => goTo(i));
+    dotsWrap.appendChild(d);
+  });
+  const dots = dotsWrap.querySelectorAll('button');
+
+  function goTo(i){
+    if(i < 0 || i >= slides.length) return;
+    slides[current].classList.remove('active');
+    dots[current].classList.remove('active');
+    current = i;
+    slides[current].classList.add('active');
+    dots[current].classList.add('active');
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === slides.length - 1;
+    slides[current].scrollTop = 0;
+  }
+
+  prevBtn.addEventListener('click', () => goTo(current - 1));
+  nextBtn.addEventListener('click', () => goTo(current + 1));
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+    if(e.key === 'ArrowLeft') goTo(current - 1);
+    if(e.key === 'Escape') closeLightbox();
+  });
+
+  // Lightbox handlers
+  function openLightbox(src, caption) {
+    const lb = document.getElementById('lightbox');
+    const lbImg = document.getElementById('lightbox-img');
+    const lbCap = document.getElementById('lightbox-caption');
+    lbImg.src = src;
+    lbCap.textContent = caption || '';
+    lb.classList.add('open');
+  }
+  function closeLightbox() {
+    const lb = document.getElementById('lightbox');
+    if (lb) lb.classList.remove('open');
+  }
+
+  document.querySelectorAll('.img-viewport img').forEach(img => {
+    img.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const card = img.closest('.screenshot-card');
+      const captionEl = card ? card.querySelector('.img-caption') : null;
+      openLightbox(img.src, captionEl ? captionEl.textContent.trim() : img.alt);
+    });
+  });
+
+  goTo(0);
+</script>
+
+</body>
+</html>
