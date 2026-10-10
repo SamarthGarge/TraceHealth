@@ -230,7 +230,7 @@ async def forgot_password(body: ForgotPasswordRequest):
                 user_id=str(user["_id"]),
                 email=user["email"],
             )
-            reset_url = f"{settings.FRONTEND_ORIGIN}/reset-password?token={token}"
+            reset_url = f"{settings.FRONTEND_ORIGIN.rstrip('/')}/reset-password?token={token}"
             send_reset_email(
                 to=user["email"],
                 reset_url=reset_url,
@@ -379,9 +379,8 @@ async def google_callback(code: str):
     # 4. Build the redirect response and set auth cookies directly on it.
     #    Must use the RedirectResponse object — a separate Response() dependency
     #    won't carry its cookies to the browser when a different object is returned.
-    #    Use 302 (not 307) so browsers follow with a GET to /auth/callback.
     redirect = RedirectResponse(
-        url=f"{settings.FRONTEND_ORIGIN}/auth/callback",
+        url=f"{settings.FRONTEND_ORIGIN.rstrip('/')}/auth/callback",
         status_code=302,
     )
     _set_auth_cookies(redirect, result)
