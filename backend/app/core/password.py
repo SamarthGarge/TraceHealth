@@ -1,17 +1,18 @@
 """
-Password hashing using passlib with bcrypt.
-bcrypt auto-handles salting and work factor.
+Password hashing using bcrypt directly.
 """
-from passlib.context import CryptContext
-
-_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
+import bcrypt
 
 def hash_password(plain: str) -> str:
     """Returns a bcrypt hash of the plain-text password."""
-    return _ctx.hash(plain)
-
+    # passlib defaults to 12 rounds for bcrypt
+    salt = bcrypt.gensalt(12)
+    hashed = bcrypt.hashpw(plain.encode('utf-8'), salt)
+    return hashed.decode('utf-8')
 
 def verify_password(plain: str, hashed: str) -> bool:
     """Returns True if plain matches the stored hash."""
-    return _ctx.verify(plain, hashed)
+    try:
+        return bcrypt.checkpw(plain.encode('utf-8'), hashed.encode('utf-8'))
+    except Exception:
+        return False
