@@ -76,5 +76,6 @@ export async function resetPassword(token, newPassword) {
  * The backend handles the redirect — no axios call needed.
  */
 export function loginWithGoogle() {
-  window.location.href = `${import.meta.env.VITE_API_BASE_URL}/api/auth/google`;
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
+  window.location.href = `${baseUrl}/api/auth/google`;
 }
