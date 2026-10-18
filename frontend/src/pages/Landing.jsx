@@ -203,29 +203,36 @@ function TypewriterHeadline() {
   return (
     <h1
       className="font-display font-semibold leading-[1.04] tracking-tight hero-typewriter"
-      style={{ fontSize: "clamp(2.8rem, 6vw, 4.8rem)" }}
+      style={{
+        fontSize: "clamp(2.8rem, 6vw, 4.8rem)",
+        /* Reserve space for 2 lines × line-height (1.04) so nothing shifts */
+        minHeight: "calc(clamp(2.8rem, 6vw, 4.8rem) * 1.04 * 2)",
+      }}
       aria-label="Know your risk. Know why."
     >
       {lines.map((line, i) => (
         <React.Fragment key={i}>
-          <span className={line.color}>
+          {/* Each line as a block so height is reserved even when empty */}
+          <span
+            className={`block ${line.color}`}
+            style={{ minHeight: "1.04em" }}
+          >
             {displayLines[i] || ""}
+            {/* Blinking cursor — shows on current typing line or at end */}
+            {((!done && cursorLine === i) || (done && i === lines.length - 1)) && (
+              <span
+                className="inline-block w-[3px] ml-0.5 animate-pulse"
+                style={{
+                  height: "0.85em",
+                  background: "#C25539",
+                  borderRadius: 1,
+                  verticalAlign: "baseline",
+                  marginBottom: "-0.05em",
+                }}
+                aria-hidden="true"
+              />
+            )}
           </span>
-          {/* Blinking cursor — shows on current typing line or at end */}
-          {((!done && cursorLine === i) || (done && i === lines.length - 1)) && (
-            <span
-              className="inline-block w-[3px] ml-0.5 animate-pulse"
-              style={{
-                height: "0.85em",
-                background: "#C25539",
-                borderRadius: 1,
-                verticalAlign: "baseline",
-                marginBottom: "-0.05em",
-              }}
-              aria-hidden="true"
-            />
-          )}
-          {i < lines.length - 1 && <br />}
         </React.Fragment>
       ))}
     </h1>
@@ -310,6 +317,24 @@ export default function LandingPage() {
     gsap.to(".step-line-fill", {
       scaleY: 1, ease: "none",
       scrollTrigger: { trigger: ".steps-area", start: "top 72%", end: "bottom 60%", scrub: 0.5 },
+    });
+
+    /* Step circles — activate (fill terra) one by one as line draws */
+    gsap.utils.toArray(".step-circle").forEach((circle, i) => {
+      gsap.to(circle, {
+        backgroundColor: "#C25539",
+        color: "#fff",
+        borderColor: "#C25539",
+        boxShadow: "0 0 0 6px rgba(194,85,57,0.10)",
+        duration: 0.35,
+        ease: EASE_OUT_STRONG,
+        immediateRender: false,
+        scrollTrigger: {
+          trigger: circle,
+          start: "top 75%",
+          toggleActions: "play none none reverse",
+        },
+      });
     });
 
     /* Bento cells — stagger with blur-in (high-end-visual-design entry) */
@@ -708,32 +733,39 @@ export default function LandingPage() {
             </div>
 
             <div className="steps-area relative">
-              {/* Connector */}
-              <div className="absolute left-[27px] top-8 bottom-8 w-0.5 hidden md:block bg-border">
-                <div className="step-line-fill w-full h-full bg-terra" />
+              {/* Connector line — centered on the 56px (w-14) circles */}
+              <div
+                className="absolute hidden md:block bg-border"
+                style={{ left: 27, top: 28, bottom: 28, width: 2 }}
+              >
+                <div className="step-line-fill w-full h-full bg-terra origin-top" style={{ transform: "scaleY(0)" }} />
               </div>
 
-              <div className="space-y-0">
+              <div className="flex flex-col">
                 {[
                   { n: "01", t: "Select a disease module", d: "Choose Diabetes, Heart Disease, TB, or Lung Cancer. Each has a tailored input form with field-level guidance." },
                   { n: "02", t: "Enter your health data", d: "Input vitals and lifestyle indicators. All processing happens in-session — nothing stored without your explicit consent." },
                   { n: "03", t: "Compare three model scores", d: "Logistic Regression, Random Forest, and XGBoost each score your risk independently. Disagreements are surfaced." },
                   { n: "04", t: "Read the SHAP explanation", d: "A waterfall chart breaks down which factors pushed your score up or down, and by exactly how much." },
-                ].map((step, i) => (
+                ].map((step, i, arr) => (
                   <div key={step.n} className="step-block flex gap-7 items-start relative">
+                    {/* Circle badge */}
                     <div
-                      className="shrink-0 w-14 h-14 rounded-full flex items-center justify-center z-10 border-2 transition-all duration-300"
+                      className="step-circle shrink-0 w-14 h-14 rounded-full flex items-center justify-center z-10 border-2 transition-all duration-500"
                       style={{
                         transitionTimingFunction: EASE_OUT_STRONG,
-                        background: i === 0 ? "#C25539" : "#fff",
-                        color: i === 0 ? "#fff" : "#C25539",
-                        borderColor: i === 0 ? "#C25539" : "#DDD5C9",
-                        boxShadow: i === 0 ? "0 0 0 6px rgba(194,85,57,0.08)" : "none",
+                        background: "#fff",
+                        color: "#C25539",
+                        borderColor: "#DDD5C9",
                       }}
                     >
                       <span className="font-mono text-sm font-bold">{step.n}</span>
                     </div>
-                    <div className="pb-14 pt-2 flex-1">
+                    {/* Content */}
+                    <div
+                      className="flex-1 pt-2"
+                      style={{ paddingBottom: i < arr.length - 1 ? "3.5rem" : "1rem" }}
+                    >
                       <h3 className="font-display text-xl font-semibold text-ink mb-1.5">{step.t}</h3>
                       <p className="text-sm leading-relaxed text-ink-mid max-w-md">{step.d}</p>
                     </div>
