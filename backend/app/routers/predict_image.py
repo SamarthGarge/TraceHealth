@@ -33,12 +33,12 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.responses import StreamingResponse
 
 from app.db import get_db
-from app.ml.gradcam import generate_gradcam
 from app.ml.vision_loader import (
     cancer_model_context,
-    tb_model_context,
+    generate_gradcam_onnx,
     preprocess_image,
     run_inference,
+    tb_model_context,
 )
 from app.security.dependencies import get_current_user, user_has_consented
 from app.utils.logging import get_logger
@@ -170,24 +170,15 @@ async def predict_tb_image(
     _validate_image(data)
     image_clean = _strip_exif(data)
 
+    db = get_db()
     try:
         tensor = preprocess_image(image_clean)
-        with tb_model_context() as model:
-            pred_idx, probs = run_inference(model, tensor)
-            # Grad-CAM must be computed while model is still in memory
-            db = get_db()
-            gradcam_bytes = generate_gradcam(model, tensor, pred_idx, image_clean)
+        with tb_model_context() as session:
+            pred_idx, probs = run_inference(session, tensor)
+            # Grad-CAM computed while session is still alive
+            gradcam_bytes = generate_gradcam_onnx(session, tensor, pred_idx, image_clean)
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e))
-    except OSError as e:
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                "PyTorch vision model unavailable on this system "
-                "(DLL load error — likely missing Visual C++ redistributable or CUDA runtime). "
-                f"Detail: {e}"
-            ),
-        )
     # Model is now unloaded from memory
 
     label      = TB_CLASSES[pred_idx]
@@ -200,7 +191,7 @@ async def predict_tb_image(
         for i, p in enumerate(probs)
     ]
 
-    gradcam_id    = await _store_gradcam(db, gradcam_bytes, "tb")
+    gradcam_id = await _store_gradcam(db, gradcam_bytes, "tb")
 
     saved   = False
     pred_id = None
@@ -238,24 +229,15 @@ async def predict_cancer_image(
     _validate_image(data)
     image_clean = _strip_exif(data)
 
+    db = get_db()
     try:
         tensor = preprocess_image(image_clean)
-        with cancer_model_context() as model:
-            pred_idx, probs = run_inference(model, tensor)
-            # Grad-CAM must be computed while model is still in memory
-            db = get_db()
-            gradcam_bytes = generate_gradcam(model, tensor, pred_idx, image_clean)
+        with cancer_model_context() as session:
+            pred_idx, probs = run_inference(session, tensor)
+            # Grad-CAM computed while session is still alive
+            gradcam_bytes = generate_gradcam_onnx(session, tensor, pred_idx, image_clean)
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e))
-    except OSError as e:
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                "PyTorch vision model unavailable on this system "
-                "(DLL load error — likely missing Visual C++ redistributable or CUDA runtime). "
-                f"Detail: {e}"
-            ),
-        )
     # Model is now unloaded from memory
 
     label           = CANCER_CT_CLASSES[pred_idx]
