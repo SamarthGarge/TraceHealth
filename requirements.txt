@@ -1,0 +1,4 @@
+# Root-level requirements — delegates to backend/requirements.txt
+# This file exists so Render auto-detects the Python project and installs deps
+# regardless of what Root Directory is configured.
+-r backend/requirements.txt
