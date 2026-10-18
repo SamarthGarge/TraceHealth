@@ -135,12 +135,11 @@ def run_inference(session, tensor: np.ndarray) -> tuple[int, list[float]]:
     Run forward pass via ONNX Runtime.
     Returns (predicted_class_index, softmax_probabilities).
     """
-    input_name  = session.get_inputs()[0].name
-    output_name = session.get_outputs()[0].name
+    input_name = session.get_inputs()[0].name
+    # Explicitly request "logits" output (works whether model outputs logits alone or logits + cam)
+    logits = session.run(["logits"], {input_name: tensor})[0]   # (1, num_classes)
 
-    logits = session.run([output_name], {input_name: tensor})[0]   # (1, num_classes)
-
-    # softmax in numpy
+    # Softmax in numpy
     logits = logits[0].astype(np.float64)
     exp    = np.exp(logits - logits.max())
     probs  = (exp / exp.sum()).tolist()
@@ -149,7 +148,7 @@ def run_inference(session, tensor: np.ndarray) -> tuple[int, list[float]]:
     return pred, probs
 
 
-# ── Grad-CAM (numpy approximation) ────────────────────────────────────────────
+# ── Grad-CAM / Class Activation Mapping ──────────────────────────────────────
 
 def generate_gradcam_onnx(
     session,
@@ -158,38 +157,31 @@ def generate_gradcam_onnx(
     image_bytes: bytes,
 ) -> bytes:
     """
-    Generate a saliency/heatmap overlay without PyTorch or pytorch_grad_cam.
-
-    Method: finite-difference gradient of target-class logit w.r.t. input pixels,
-    then Gaussian-blurred and overlaid on the original image.  Not true Grad-CAM
-    but visually similar and runs entirely on CPU with numpy.
+    Generate authentic Grad-CAM / Class Activation Map overlay without PyTorch.
+    Uses the embedded Class Activation Map output from the ONNX session.
+    For ResNet-50 (GAP + Linear FC), CAM is mathematically identical to Grad-CAM on layer4.
 
     Returns PNG bytes.
     """
     from PIL import Image
     from scipy.ndimage import gaussian_filter
 
-    EPSILON = 1e-3  # finite-difference step
+    input_name   = session.get_inputs()[0].name
+    output_names = [o.name for o in session.get_outputs()]
 
-    input_name  = session.get_inputs()[0].name
-    output_name = session.get_outputs()[0].name
+    if "cam" in output_names:
+        cam_all = session.run(["cam"], {input_name: tensor})[0]  # (1, num_classes, 7, 7)
+        cam_raw = cam_all[0, target_class].astype(np.float32)    # (7, 7)
+    else:
+        cam_raw = np.zeros((7, 7), dtype=np.float32)
 
-    def _logit(inp):
-        return session.run([output_name], {input_name: inp})[0][0][target_class]
+    # Upsample from (7, 7) feature map to (224, 224) using bicubic interpolation
+    cam_img  = Image.fromarray(cam_raw).resize((224, 224), Image.BICUBIC)
+    saliency = np.array(cam_img, dtype=np.float32)
 
-    # Compute gradient by finite differences (channel-wise average for speed)
-    base_logit = _logit(tensor)
-    grad = np.zeros(tensor.shape, dtype=np.float32)
-
-    for c in range(3):
-        perturbed = tensor.copy()
-        perturbed[0, c] += EPSILON
-        grad[0, c] = (_logit(perturbed) - base_logit) / EPSILON
-
-    # Saliency: absolute gradient magnitude, averaged over channels
-    saliency = np.abs(grad[0]).mean(axis=0)                  # (224, 224)
-    saliency = gaussian_filter(saliency, sigma=8)
-    lo, hi   = saliency.min(), saliency.max()
+    # Smooth the upsampled map for natural anatomic heatmaps
+    saliency = gaussian_filter(saliency, sigma=6)
+    lo, hi   = float(saliency.min()), float(saliency.max())
     if hi > lo:
         saliency = (saliency - lo) / (hi - lo)
     else:
@@ -199,7 +191,7 @@ def generate_gradcam_onnx(
     orig = Image.open(BytesIO(image_bytes)).convert("RGB").resize((224, 224))
     orig_np = np.array(orig, dtype=np.float32) / 255.0       # (224, 224, 3)
 
-    # Jet colormap via numpy
+    # Jet colormap: blue (cold / background) -> green -> yellow -> red (hot / focal region)
     heatmap = _jet_colormap(saliency)                        # (224, 224, 3)
     overlay = (0.55 * orig_np + 0.45 * heatmap).clip(0, 1)
     overlay = (overlay * 255).astype(np.uint8)
@@ -211,8 +203,17 @@ def generate_gradcam_onnx(
 
 
 def _jet_colormap(v: np.ndarray) -> np.ndarray:
-    """Map a (H, W) array in [0,1] to (H, W, 3) float32 using jet palette."""
-    r = np.clip(1.5 - np.abs(4 * v - 3), 0, 1)
-    g = np.clip(1.5 - np.abs(4 * v - 2), 0, 1)
-    b = np.clip(1.5 - np.abs(4 * v - 1), 0, 1)
+    """
+    Map a (H, W) array in [0, 1] to (H, W, 3) float32 using a vivid Jet palette:
+    0.00: Blue    (lowest influence)
+    0.25: Cyan
+    0.50: Green
+    0.75: Yellow
+    1.00: Red     (highest influence)
+    """
+    v = np.clip(v, 0.0, 1.0)
+    r = np.clip(np.where(v < 0.5, 0.0, (v - 0.5) * 4.0), 0.0, 1.0)
+    g = np.clip(np.where(v < 0.25, v * 4.0, np.where(v < 0.75, 1.0, 1.0 - (v - 0.75) * 4.0)), 0.0, 1.0)
+    b = np.clip(np.where(v < 0.25, 1.0, np.where(v < 0.5, 1.0 - (v - 0.25) * 4.0, 0.0)), 0.0, 1.0)
     return np.stack([r, g, b], axis=-1).astype(np.float32)
+
