@@ -1,7 +1,3 @@
-
-# ── PyTorch index (CPU-only builds — avoids 2GB+ GPU wheels on Render free tier)
---extra-index-url https://download.pytorch.org/whl/cpu
-
 # ── Core Framework ─────────────────────────────────────────────────────────────
 fastapi==0.115.0
 uvicorn[standard]==0.30.6
@@ -16,6 +12,7 @@ pymongo==4.8.0
 
 # ── Auth ───────────────────────────────────────────────────────────────────────
 python-jose[cryptography]==3.3.0
+bcrypt==4.2.0
 passlib[bcrypt]==1.7.4
 httpx==0.27.2
 
@@ -30,12 +27,13 @@ joblib==1.4.2
 pandas==2.2.2
 numpy==1.26.4
 
-# ── Vision Pipeline (CPU-only torch) ──────────────────────────────────────────
-torch
-torchvision
-grad-cam>=1.5.0
+# ── Vision Pipeline (ONNX Runtime — low memory footprint for free tier) ───────
+onnxruntime==1.18.1
+scipy==1.13.1
+Pillow==10.4.0
 
 # ── Document Intelligence ─────────────────────────────────────────────────────
+pytesseract==0.3.13
 pdfplumber==0.11.3
 
 # ── Data Export ───────────────────────────────────────────────────────────────
@@ -45,5 +43,6 @@ reportlab>=4.0
 # ── Scheduling ────────────────────────────────────────────────────────────────
 apscheduler==3.10.4
 
-# ── Image Processing ──────────────────────────────────────────────────────────
-Pillow==10.4.0
+# ── Testing ────────────────────────────────────────────────────────────────────
+pytest==8.3.2
+pytest-asyncio==0.23.8

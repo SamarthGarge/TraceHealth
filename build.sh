@@ -4,6 +4,9 @@
 
 set -o errexit  # exit on error
 
-cd backend
+if [ -d "backend" ]; then
+    cd backend
+fi
+
 pip install --upgrade pip
 pip install -r requirements.txt
