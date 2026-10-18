@@ -35,8 +35,8 @@ from fastapi.responses import StreamingResponse
 from app.db import get_db
 from app.ml.gradcam import generate_gradcam
 from app.ml.vision_loader import (
-    get_cancer_ct_model,
-    get_tb_model,
+    cancer_model_context,
+    tb_model_context,
     preprocess_image,
     run_inference,
 )
@@ -171,7 +171,12 @@ async def predict_tb_image(
     image_clean = _strip_exif(data)
 
     try:
-        model = get_tb_model()
+        tensor = preprocess_image(image_clean)
+        with tb_model_context() as model:
+            pred_idx, probs = run_inference(model, tensor)
+            # Grad-CAM must be computed while model is still in memory
+            db = get_db()
+            gradcam_bytes = generate_gradcam(model, tensor, pred_idx, image_clean)
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except OSError as e:
@@ -183,9 +188,7 @@ async def predict_tb_image(
                 f"Detail: {e}"
             ),
         )
-
-    tensor = preprocess_image(image_clean)
-    pred_idx, probs = run_inference(model, tensor)
+    # Model is now unloaded from memory
 
     label      = TB_CLASSES[pred_idx]
     confidence = probs[pred_idx]
@@ -197,8 +200,6 @@ async def predict_tb_image(
         for i, p in enumerate(probs)
     ]
 
-    db = get_db()
-    gradcam_bytes = generate_gradcam(model, tensor, pred_idx, image_clean)
     gradcam_id    = await _store_gradcam(db, gradcam_bytes, "tb")
 
     saved   = False
@@ -238,7 +239,12 @@ async def predict_cancer_image(
     image_clean = _strip_exif(data)
 
     try:
-        model = get_cancer_ct_model()
+        tensor = preprocess_image(image_clean)
+        with cancer_model_context() as model:
+            pred_idx, probs = run_inference(model, tensor)
+            # Grad-CAM must be computed while model is still in memory
+            db = get_db()
+            gradcam_bytes = generate_gradcam(model, tensor, pred_idx, image_clean)
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except OSError as e:
@@ -250,9 +256,7 @@ async def predict_cancer_image(
                 f"Detail: {e}"
             ),
         )
-
-    tensor = preprocess_image(image_clean)
-    pred_idx, probs = run_inference(model, tensor)
+    # Model is now unloaded from memory
 
     label           = CANCER_CT_CLASSES[pred_idx]
     confidence      = probs[pred_idx]
@@ -264,8 +268,6 @@ async def predict_cancer_image(
         for i, p in enumerate(probs)
     ]
 
-    db = get_db()
-    gradcam_bytes = generate_gradcam(model, tensor, pred_idx, image_clean)
     gradcam_id    = await _store_gradcam(db, gradcam_bytes, "cancer")
 
     saved   = False
