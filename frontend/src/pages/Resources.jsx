@@ -27,7 +27,7 @@ const DISEASES = [
       },
       {
         title: "CDC — Diabetes Prevention Program",
-        url: "https://www.cdc.gov/diabetes/prevention/index.html",
+        url: "https://www.cdc.gov/diabetes-prevention/",
         org: "US Centers for Disease Control",
         type: "Prevention",
         desc: "Evidence-based lifestyle program to reduce risk of type 2 diabetes by up to 58%.",
@@ -71,7 +71,7 @@ const DISEASES = [
       },
       {
         title: "ESC — Guidelines on Cardiovascular Prevention",
-        url: "https://www.escardio.org/Guidelines/Clinical-Practice-Guidelines/CVD-Prevention",
+        url: "https://www.escardio.org/Guidelines",
         org: "European Society of Cardiology",
         type: "Clinical Guidelines",
         desc: "2021 ESC guidelines for cardiovascular disease prevention in clinical practice.",
@@ -101,7 +101,7 @@ const DISEASES = [
       },
       {
         title: "CDC — TB Disease & Latent TB",
-        url: "https://www.cdc.gov/tb/topic/basics/default.htm",
+        url: "https://www.cdc.gov/tb/about/index.html",
         org: "US Centers for Disease Control",
         type: "Disease Overview",
         desc: "Explains the difference between latent TB infection and TB disease, and how each is treated.",
@@ -115,7 +115,7 @@ const DISEASES = [
       },
       {
         title: "NTEP — India National TB Programme",
-        url: "https://tbcindia.gov.in/",
+        url: "https://tbcindia.mohfw.gov.in/",
         org: "Government of India",
         type: "National Programme",
         desc: "India's national TB elimination programme with resources for patients and providers.",
