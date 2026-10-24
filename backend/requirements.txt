@@ -27,10 +27,9 @@ joblib==1.4.2
 pandas==2.2.2
 numpy==1.26.4
 
-# ── Vision Pipeline (ONNX Runtime — low memory footprint for free tier) ───────
-# onnxruntime (~30 MB RAM) replaces torch+torchvision (~300 MB RAM)
-# to stay under Render's free-tier 512 MB limit.
-onnxruntime==1.18.1
+# ── Vision Pipeline (PyTorch — original .pt model checkpoints) ────────────────
+torch==2.3.1
+torchvision==0.18.1
 scipy==1.13.1
 Pillow==10.4.0
 
