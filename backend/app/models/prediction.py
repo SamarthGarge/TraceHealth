@@ -53,11 +53,15 @@ class ModelResult(BaseModel):
 
 
 class PredictResponse(BaseModel):
-    """Full prediction response with all 3 models and ensemble."""
+    """Full prediction response with all 3 models, ensemble, and best model indicator."""
     disease: str
     models: list[ModelResult]
     ensemble_probability: float
     ensemble_risk_level: str
+    best_model_key: str = Field(
+        description="Key of the model whose probability is closest to the ensemble "
+        "average — the most representative model to highlight in the UI.",
+    )
     prediction_id: str | None = Field(
         default=None,
         description="MongoDB ObjectId string if the prediction was saved to history "

@@ -35,7 +35,8 @@ def compare_models(
                 ...
             ],
             "ensemble_probability": 0.68,
-            "ensemble_risk_level": "Moderate"
+            "ensemble_risk_level": "Moderate",
+            "best_model_key": "xgb"   # model whose probability is closest to ensemble
         }
     """
     feature_names = get_features(disease)
@@ -68,8 +69,17 @@ def compare_models(
     ensemble_prob = compute_ensemble_probability(probabilities)
     ensemble_risk = compute_risk_level(ensemble_prob)
 
+    # Best model = the one whose probability is closest to the ensemble probability.
+    # This surfaces the most representative model rather than rewarding the
+    # most overconfident one.
+    best_model_key = min(
+        probabilities,
+        key=lambda k: abs(probabilities[k] - ensemble_prob),
+    )
+
     return {
         "models": model_results,
         "ensemble_probability": ensemble_prob,
         "ensemble_risk_level": ensemble_risk,
+        "best_model_key": best_model_key,
     }

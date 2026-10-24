@@ -109,6 +109,7 @@ async def predict(
         models=models_out,
         ensemble_probability=comparison["ensemble_probability"],
         ensemble_risk_level=comparison["ensemble_risk_level"],
+        best_model_key=comparison["best_model_key"],
         prediction_id=prediction_id,
     )
 
