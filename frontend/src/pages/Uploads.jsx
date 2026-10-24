@@ -121,7 +121,7 @@ function AnalysisPanel({ result, onClose }) {
         {/* Header */}
         <div className="sticky top-0 bg-parchment border-b border-border px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <div>
-            <p className="text-xs font-mono tracking-widest text-ink-ghost uppercase mb-0.5">AI Report Analysis</p>
+            <p className="text-xs font-mono tracking-widest text-ink-ghost uppercase mb-0.5">Report Analysis</p>
             <h2 className="font-serif text-xl text-ink">{result.filename}</h2>
           </div>
           <button onClick={onClose} className="p-2 rounded-lg text-ink-ghost hover:text-ink hover:bg-border-soft transition-colors">
@@ -404,11 +404,11 @@ export default function Uploads() {
             </svg>
           </div>
           <div>
-            <p className="text-sm font-semibold text-ink mb-0.5">AI Report Analysis</p>
+            <p className="text-sm font-semibold text-ink mb-0.5">Report Analysis</p>
             <p className="text-xs text-ink-mid leading-relaxed">
               Upload a blood test, lab report, or medical scan (PDF or image) and click{" "}
               <strong>Analyze ✦</strong> to extract health markers and get personalised dietary
-              and lifestyle recommendations — powered by OCR and a curated health-advice engine.
+              and lifestyle recommendations.
             </p>
           </div>
         </div>
@@ -499,7 +499,7 @@ export default function Uploads() {
                             disabled={analyzing === f.id}
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-terra-dim text-terra
                               hover:bg-terra hover:text-white transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
-                            title="Analyze with AI"
+                            title="Analyze report"
                           >
                             {analyzing === f.id ? (
                               <div className="w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin" />
